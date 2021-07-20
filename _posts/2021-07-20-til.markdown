@@ -1,0 +1,140 @@
+---
+layout: post
+title:  "210720-TIL(TypeScript)"
+subtitle:   "TIL-210720"
+categories: til
+tags: til
+comments: false
+---
+
+## tsconfig 분석
+---
+```javascript
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "target": "ES5",
+        "moduleResolution": "node",
+        "outDir": "dist",
+        "baseUrl": ".",
+        "sourceMap": true,
+        "downlevelIteration": true,
+        "noImplicitAny": false,
+        "paths": {"*":["node_modules/*"]}
+    },
+    "include": ["src/**/*"]
+}
+```
+
+- **compilerOptions**은 tsc명령 형식에서 옵션을 나타냄    
+
+- **include** 항목은 파일의 목록을 나타낸다.  
+위와 같이 src/*/*라고 쓰면 src 디텍터리를 포함한 하위디렉터리에 있는 모든 타일을 컴파일 대상으로 포함한다.
+
+- **module** 타입스크립트 소스코드가 컴파일 된 후 만들어진 ES5 자바스크립트 코드는 Web과 Node.js에서 모두 동작해야하는데 둘은 작동형태가 다르다. 따라서 사용하고자 하는 방식에 맞는 항목을 입력한다.
+    >Web Browser: AMD(Asynchronous Module   Definition)   
+    Node.js: conmmonjs  
+
+- **moduleResolution** 키는 module키의 값이 commonjs이면 노드제이에서에서 동작하는 것을 말하므로, 키값은 항상 **node**로 설정해야한다.  
+만약 module 키가 amd이면 -> classic으로 입력해야한다.
+
+- **target**키는 트랜스파일할 대상 자바스크립트 버전을 설정. es5, es6을 설정할 수 있다.
+
+- **baseUrl과 outDir**  
+트랜스파일된 자바스키립트 차일을 저장한느 디렉터리를 설정한다.  
+tsc는 tsconfig.json이 있는 디렉터리에서 실행되고 현재디렉터리를 의미하는 '.'을 baseUrl로 설정하는 것이 일반적   
+outDir키는 baseUrl을 기준으로 하위 디렉터리의 이름이다. 여기서는 dist로 설정했으므로 빌드된 결과가 dist에 만들어진다.
+
+- **path**키
+소스 파일의 import문에서 from부분을 해석할 때 찾아야하는 디렉터리를 설정. import가 외부 패키지인 경우 node_modules 디렉터리에 있으므로 node_module/*을 포함
+
+- **downlevelIteration**키
+제네레이터 구문이 정상적으로 동작하기 위해서는 downlevelIteration키 값이 true여야한다.
+
+- **nolmplicitAny**키
+타입스크립트는 타입을 명시하지 않은 경우 타입을 any로 간주한다. 
+    > false로 설정 -> 타입을 지정하지 않아도 경고 ❌
+    true로 설정 -> 타입을 지정하지 않으면 경고 ⭕️
+
+
+## 인터페이스
+---
+
+```javascript
+let o: object = {name: 'jack', age: 32}
+//위와 같이 설정하면 any 타입처럼 작동해서 객체를 변경하거나 name에 숫자를 넣어도 아무런 문제가 없는 것처럼 동작함
+
+//따라서 interface를 사용해야함
+interface 인터페이스 이름 {
+    속성이름[?]: 속성 타입
+}
+
+//ex
+interface IPerson {
+    name: string
+    age: number
+}
+let bad1: IPerson = {} // 속성의 갯수 오류
+let bad1: IPerson = {name: 32, age: "hi"} // 타입오류
+let bad1: IPerson = {name: 'jack', age: 32, etc: true} // 속성 추가의 오류
+```
+
+## 선택속성 구문
+---
+```javascript
+interface IPerson {
+    name: string
+    age: number
+    etc?: boolean // '?'를 넣으면 있어도 없어도 작동함
+}
+```
+
+## 잔여 연산자와 전개 연산자
+---
+- 잔여 연산자
+    ```javascript
+    let address: any = {
+        country: 'Korea',
+        city: 'Seoul',
+        address1: 'Gangnam',
+        address2: 'Sinsa',
+        address3: '789 street'
+    }
+    const { country, city, ...detail } = address
+    console.log(detall)
+    /*
+    {
+        address1: 'Gangnam',
+        address2: 'Sinsa',
+        address3: '789 street'
+    }
+    */
+    //detail변수에 country와 city를 제외한 나머지 속성을 담음
+    ```
+
+- 전개 연산자   
+전개연산자는 객체의 속성을 모두 **전개**해 새로운 객체로 만들어준다.
+    ```javascript
+    let coord = {..{ x:0 }, ...{ y: 0 }}
+    console.log(coord) // {x: 0, y: 0}
+
+    let part1 = {name: 'jane'}, part2 = {age:22}, part3 = {city: 'Seoul', country: 'Kr'}
+    let mreged = {...part1, ...part2, ...part3}
+    console.log(merged)
+    // { name: 'jane', age: 22, city: 'Seoul', country: 'Kr'}
+    ```
+
+## 타입 단언
+```javascript 
+export default interface INameable {
+    name: string
+},
+//----------------다른 파일--------------------
+import INameable from './INameable'
+let obj: object = {name: 'Jack'}
+
+let name1 = (<INameable>obj).name
+let name2 = (obj as INameable).name
+console.log(name1, name2) // Jack Jack
+```

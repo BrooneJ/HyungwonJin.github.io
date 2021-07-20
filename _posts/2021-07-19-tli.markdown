@@ -8,8 +8,8 @@ comments: false
 ---
 
 # 타입스크립트
-
-타입스크립트에서는 
+---
+**'Do it Typescript programming'** 도서 참고
 
 ## 타입 주석(type annotation)
 ---
