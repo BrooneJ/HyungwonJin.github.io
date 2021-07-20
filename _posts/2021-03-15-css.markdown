@@ -1,0 +1,132 @@
+---
+layout: post
+title:  "[CSS] CSS 문법 정리"
+subtitle:   "CSS"
+categories: develop
+tags:  front CSS
+comments: true
+---
+
+# CSS 문법 정리
+---
+- [# CSS 문법 정리](#-css-문법-정리)
+- [## 선택자](#-선택자)
+- [## Text](#-text)
+- [### Text 테크닉](#-text-테크닉)
+- [## Image](#-image)
+- [## Grid](#-grid)
+- [### Grid 테크닉](#-grid-테크닉)
+- [## Filter](#-filter)
+- [## Position](#-position)
+
+
+
+## 선택자
+---
+https://code.tutsplus.com/ko/tutorials/the-30-css-selectors-you-must-memorize--net-16048
+
+## Text
+---
+- text-align: 왼쪽 정렬, 오른쪽 정렬, 가운데 정렬
+- line-height: text의 위 아래 간격을 띄움
+- letter-spacing: 글자 간의 간격을 띄움
+- writing-mode:
+
+    1. horizontal-tb: 블록의 표시 방향은 위에서 아래 입니다. 문장은 가로로 표시됩니다.
+
+    1. vertical-rl: 블록의 표시 방향은 오른쪽에서 왼쪽입니다. 문장은 수직으로 표시됩니다.
+
+    1. vertical-lr: 블록의 표시 방향은 왼쪽에서 오른쪽입니다. 문장은 수직으로 표시됩니다.
+   
+  - text-orientation: upright; 새로로 표기됨
+- white-space: nowrap; 윈도우의 사이즈가 바뀌면 자동으로 text의 줄이 바뀌는 것을 막아줌
+
+### Text 테크닉
+---
+- text-shadow: 글자에 테두리 넣는 법
+  
+    HTML
+    ```
+    <h1>
+     테두리선 만들기
+    </h1>
+    ```
+    CSS
+    ```
+    h1 {
+    text-shadow: -1px 0 blue, 0 1px blue, 1px 0 blue,   0 -1px blue;
+    }
+    ```
+- 그림 위에 글자 올리는 방법 (grid 경계선 위에 올리는 법)
+
+    ```
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    ```
+
+## Image
+---
+- background-image: url("https://source.unsplash.com/random/");
+- background-size: cover;
+- background-position: center;
+
+## Grid
+---
+https://code.tutsplus.com/ko/tutorials/introduction-to-css-grid-layout-with-examples--cms-25392
+
+- grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 반응형 가로 길이
+- grid-area: rowStart/columnStart/rowEnd/columnEnd
+    ```
+        .div1{
+          grid-area: 2/2/3/4;
+        }
+    ```
+
+
+### Grid 테크닉
+---
+- 테두리 겹칩 제거
+    ```
+        box-shadow: 
+        2px 0 0 0 #888, 
+        0 2px 0 0 #888, 
+        2px 2px 0 0 #888,
+        2px 0 0 0 #888 inset, 
+        0 2px 0 0 #888 inset;
+    ```
+    or
+    ```
+        border-bottom:0px;
+    ```
+
+## Filter
+---
+- blur(ex. 50px, 1.5rem): 블러 효과를 적용해서 이미지를 흐리게 만듦, 바깥으로 넘치는 부분은
+
+    HTML
+    ```
+    <div>
+        <img src=""></img>
+    </div>
+    ```
+
+    CSS
+    ```
+    img {
+        filter: blur(5px);
+    }
+
+    div {
+        overflow: hidden;
+    }
+    ```
+    과 같은 방법으로 overflow를 없애 줄 수 있다.
+
+
+## Position
+---
+- position: relative; 처음 시작점에서 움직임, top, bottom, right, left 로 움직일 수 있다.
+- position: absolute; relative의 내부에서 움직임, 만약 부모div에 relative를 선언해주지 않았다면 body 위에서 움직임
+- position: fixed; top, bottom, right, left 로 움직일 수 있다. 다른 것과 다른 레이어에 있게 되어 겹칠 수도 있다.
