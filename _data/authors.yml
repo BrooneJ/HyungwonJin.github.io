@@ -1,8 +1,8 @@
 # The primary author of this blog.
 # Must be the same as `author` in `_config.yml`.
 # Change `qwtel` to your shortname (used in the front matter to set a page's author, e.g. `author: qwtel`).
-jin-hw:
-  name:              Zeeen
+Hyungwon Jin:
+  name:              HyungwonJin
   email:             hwjin9211@gmail.com
 
   # Used at the bottom of each page and at the top of the `about` layout
@@ -46,7 +46,7 @@ jin-hw:
     # pinterest:       <username>
     # foursquare:      <number>
     # yelp:            <string>
-    github:          jin-hw
+    github:          HyungwonJin
     # stackoverflow:   <number/username>
     # npm:             <username>
     # hackernews:      <username>
@@ -58,7 +58,7 @@ jin-hw:
     # stumbleupon:     <username>
     # paypal:          <username>
     email:           mailto:hwjin9211@gmail.com
-    rss:             https://jin-hw.github.io/feed.xml
+    rss:             https://hyungwonjin.github.io/feed.xml
 
 # Another author
 mdo:
