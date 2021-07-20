@@ -2,8 +2,8 @@
 layout: post
 title:  "[Algorithm] Stack 알고리즘"
 subtitle:   "javascript"
-categories: develop
-tags: algorithm
+categories: algorithm
+tags: boj
 comments: true
 ---
 

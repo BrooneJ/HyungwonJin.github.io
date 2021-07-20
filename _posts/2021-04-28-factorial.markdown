@@ -2,8 +2,8 @@
 layout: post
 title:  "[Algorithm] factorial 0갯수 세는 법"
 subtitle:   "factorial"
-categories: develop
-tags: algorithm
+categories: algorithm
+tags: boj
 comments: true
 ---
 https://tmdrl5779.tistory.com/95
