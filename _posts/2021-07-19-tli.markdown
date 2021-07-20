@@ -1,0 +1,50 @@
+---
+layout: post
+title:  "210719-TIL(TypeScript)"
+subtitle:   "TIL-210719"
+categories: til
+tags: til
+comments: false
+---
+
+# 타입스크립트
+
+타입스크립트에서는 
+
+## 타입 주석(type annotation)
+---
+let n: number = 1 과 같이 변수 n뒤에 ':'과 타입 이름이 있다.    
+만약, let m = 2와 같이 콜론과 타입이름이 없으면 타입스크립트는 '=' 뒤의 값을 분석해서 '타입 추론'을 한다.
+
+```javascript
+nom i -D typescript ts-node
+```
+
+## 시작 소스 파일명을 index로 짓는 이유?
+---
+node나 ts-node로 소스 파일을 실행하려면 ts-node ./src/index.ts 명령을 사용합니다.   
+하지만 index면 생략하고 ts-node ./src	로 실행가능
+
+
+## script에서 dev, build
+---
+dev 명령은 개발 중에 src 디렉터리에 있는 index.ts 파일을 실행하는 용도
+build 명령은 개발이 완료된 후 프로그램을 배포하기 위해 dist 디렉터리에 es5 자바스크립트 파일을 만들 때 사용
+
+
+## export 키워드
+---
+export 키워드는 function, interface, class, type, let, const 키워드 앞에 붙일 수 있다.
+
+## export default 키워드
+---
+export default 키워드는 한 모듈이 내보내는 기능 중 오직 한 개에만 붙일 수 있다. 
+
+export default가 붙은 기능은 import 문으로 불러올 때 중괄호 {} 없이 사용할 수 있습니다.     
+export default는 export등이 있는 파일에서도 사용할 수 있습니다.
+
+## chance 패키지
+---
+가짜 데이터를 만들어주는 패키지     
+-ramda 패키지   
+함수형 유틸리티 패키지
