@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "210721-TIL(TypeScript)"
+title:  "210721-TIL(TypeScript, Node.js)"
 subtitle:   "TIL-210721"
 categories: til
 tags: til

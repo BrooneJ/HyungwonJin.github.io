@@ -18,5 +18,7 @@ exception: connect failed
 exiting with code 1
 ```
 이렇게 뜨면     
+```javascript
 **인텔맥**: mongod --config /usr/local/etc/mongod.conf --fork   
 **M1**: mongod --config /opt/homebrew/etc/mongod.conf --fork
+```
