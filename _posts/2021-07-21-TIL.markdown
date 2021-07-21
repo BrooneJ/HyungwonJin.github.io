@@ -1,0 +1,101 @@
+---
+layout: post
+title:  "210721-TIL(TypeScript)"
+subtitle:   "TIL-210721"
+categories: til
+tags: til
+comments: false
+---
+
+# 함수와 메서드
+---
+
+## 타입스크립트에서 함수 선언문
+---
+```javascript
+function 함수 이름(매개변수1: 타입1, 매개변수2: 타입2, ...): 반환값 타입{
+    함수 내용
+}
+
+let 변수명 = 함수 이름(인자(또는 인수라고 부름)1, 인자2)
+
+//ex
+function add(a: number, b: number): number {
+    return a + b
+}
+```
+
+## undefined 관련 주의 사항
+---
+```javascript
+interface INameable {
+    name: string
+}
+
+//undefined를 간과한 잘못된 예시
+function getName(o: INameable) { return o.name}
+let n = getName(undefined)// 라고 하면 'undefined.name'이 되어 문제가 발생
+
+//올바른 예시
+function getName(0: INameable) {
+    return o != undefined ? o.name : 'unknown name'
+}
+
+//만약 선택 속성이 들어 있을 경우
+interface IAgeable {
+    age?: number
+}
+function getAge(o: IAgeable) {
+    return o != undefined && o.age ? o.age : 0
+}
+```
+
+## 표현식
+---
+표현식(expression)이라는 용어는 리터럴(literal), 연산자(operator), 변수, 함수 호출(function call)등이 복합적으로 구성된 코드를 말함
+
+## 함수 표현식
+---
+let add = function(a, b) { return a + b }에서 **'function(a, b) { return a + b }'** 부분을 함수 표현식이라고 부름
+
+
+## 화살표 함수
+---
+```javascript
+const 함수 이름 = (매개변수1: 타입1, 매개변수2: 타입2, ... ): 반환 타입 => 함수 몸통
+
+const arrow1 = (a: number, b: number): number => { return a + b} // 실행문 방식
+const arrow2 = (a: number, b: number): number => a + b // 표현문 방식 
+```
+
+## if 표현식
+---
+자바스크립트는 실행문 지향 언어(execution-oriented language)와 표현식 지향 언어(expression-oriented language) 둘 다 구현 가능
+```javascript
+val x = if(a > b) a else b
+```
+위와 같이 표현식도 구현 가능
+
+
+## 객체 생성 시 타입스크립트 구문
+---
+```javascript
+export type Person = {name: string, age: number}
+
+export const makePerson = (nale: string, age: number = 10): Person => {
+    // const person = {name: name, age: age}
+    const person = {name, age} //와 같이 생략 가능
+    // return person
+}
+
+//또한 다음과 같이 표현 가능
+export const makePerson = (name:string, age: number = 10): Person => ({name, age}) //소괄호 꼭 있어야함
+
+console.log(makePerson('Jack')) // {name: 'Jack', age: 10}
+console.log(makePerson('Jane', 33)) // {name: 'Jane', age: 33}
+
+const printPerson = ({name, age}: Person): void => console.log(`name: ${name}, age: ${age}`)
+
+printPerson({name: 'Jack', age: 10})
+```
+
