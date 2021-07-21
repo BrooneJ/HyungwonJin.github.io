@@ -7,7 +7,7 @@ tags: til
 comments: false
 ---
 
-# 함수와 메서드
+# TypeScript
 ---
 
 ## 타입스크립트에서 함수 선언문
@@ -99,3 +99,49 @@ const printPerson = ({name, age}: Person): void => console.log(`name: ${name}, a
 printPerson({name: 'Jack', age: 10})
 ```
 
+# MongoDB
+---
+
+## findByIdAndDelete
+---
+Issue a MongoDB findOneAndDelete() command by a document's _id field. In other words, findByIdAndDelete(id) is a shorthand for findOneAndDelete({ _id: id }).       
+즉, findOneAndDelete({ _id: id })를 줄여서 findByIdAndDelete(id)라고 쓸 수 있다.
+
+## 목록에서 오름차순, 내림차순 정렬
+---
+```javascript
+export const home = async (req, res) => {
+    try{
+        const videos = await Video.find({}).sort({ createdAt: "desc"}); // find({})에 sort()함수와 내부에 정렬 대상을 입력, 그리고 오름차순이면 'acs', 내림차순이면 'desc'
+        return res.render("home", {pageTitle:"Home", videos});
+    } catch {
+        return res.render("server-error")
+    }
+}
+```
+
+## search 창에서 검색어를 받아오는 방법
+---
+```pug
+form(method="GET")
+    input(placeholder="Search by title", name="keyword", type="text") //name="지정하고 싶은 단어"
+    input(type="submit", value="Search now")
+```
+
+```javascript
+console..log(req.query) //로 설정하고 검색을 하면  { keyword: '검색어' }과 같은 json을 얻을 수 있다.
+//id는 req.parmas에서 가져왔던 것을 기억할 것
+const { keyword } = req.query;
+```
+
+## RegExp 사용법
+---
+```javascript
+//검색해서 문장 속에 들어 있는 keyword를 찾을 때
+let video = [];
+video = await Video.find({
+    title: {
+        $regex: new RegExp(keyword, "i") // i는 대소문자 관계 없이 찾아줌
+    }
+})
+```
