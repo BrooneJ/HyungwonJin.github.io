@@ -1,0 +1,335 @@
+---
+layout: post
+title:  "210722-TIL(Node.js)"
+subtitle:   "TIL-210722"
+categories: til
+tags: til
+comments: false
+---
+
+# Node.js
+---
+자바스크립트를 웹 밖에서 쓰게 해주는 것
+
+## Express
+---
+### 설치방법 & 서버연결
+```javascript
+//터미널에서
+npm i express
+//js파일에서
+import express from "express";
+const PORT = 4000;
+const app = express();
+const handleListening = (req, res) => console.log(`Serverlistenting on port ${PORT}`);
+app.listen(PORT, handleListening);
+```
+필요한 패키지들을 담고 있음
+
+## 다른 사람의 코드를 받았을 때
+---
+```javascript
+npm i 
+```
+을 입력하면 다른 사람들이 사용한 패키지들을 한번에 설치할 수 있음
+
+## babel (babeljs.io)
+---
+babel은 우리가 작성한 모던 자바스크립트릴 컴퓨터가 이해할 수 있는 자바스크립트로 컴파일 해줌    
+### 설치 방법
+```javascript
+npm i @babel/core
+touch babel.config.json
+|
+v
+babel.config.json파일에 다음을 입력
+{
+    "presets": ["@babel/preset-env]
+}
+npm i @babel/preset-env --save-dev
+npm i @babel/node 
+|
+v
+package.json 파일에서 다음을 입력
+"scripts": {
+    "dev": :babel-node index.js"
+}
+```
+
+## dependencies & devDependencies
+---
+dependencies는 프로젝트를 위해서 필요한 것  
+devDependencies는 개발자를 위해서 필요한 것(ex.개발자가 모던 자바스크립트를 편하게 사용하기 위해서 babel이 필요함)
+
+## nodemon
+---
+파일의 내용이 변경되면 저장할 때 알아서 서버를 껐다가 다시 켜주는 기능
+```javascript
+npm i nodemon
+package.json파일에서 다음을 입력
+"scripts": {
+    "dev": :nodemon --exec babel-node index.js"
+}
+```
+
+## GET
+---
+get은 접속한 페이지에서 정보를 가져오는 프로토콜    
+브라우저가 나를 대신해서 웹사이트를 request하고, 페이지를 가져다 줌
+
+## Middleware
+---
+```javascript
+const logger = (req, res, next) => {
+    next();
+}
+//next가 있으면 미들웨어가 됨, next가 없으면 다음 단계로 넘어가지 않음
+const home = (req, res) => res.send("Hello");
+//middleware 사용방법
+app.get("/", logger, home);
+//또는
+app.use(logger);//아래에 있는 모든 get들이 middleware를 필요로 할 경우
+app.get("/". home)
+```
+
+## External Middleware
+---
+```javascript
+//터미널에서 설치
+npm i morgan
+
+// import
+import morgan from "morgan";
+const logger = morgan("dev");
+
+app.use(logger);
+```
+
+## Server & Router & Controller
+---
+server.js
+```javascript
+import globalRouter from "./routers/globalRouter";
+// export default를 import할 때는 {}를 사용하지 않음
+
+app.use("/", globalRouter);
+```
+globalRouter.js
+```javascript
+inport express from "express";
+import { join } from "../controller/userController";
+//낱개로 된 export를 import 할 때는 {} 를 사용함
+
+const globalRouter = express.Router();
+
+globalRouter.get("/join", join);
+
+export default globalRouter;
+```
+userController.js
+```javascript
+export const join = (req, res) => res.send("join");
+```
+
+## URL parameters
+---
+videoRouter.js
+```javascript
+videoRouter.get("/:id", see);
+//':'을 꼭 넣어줘야지 parameter를 받아올 수 있다.
+```
+
+videoCotroller.js
+```javascript
+export const see = (req, res) => {
+    console.log(req.params);
+    // {id: 해당 URL이 출력됨}
+}
+```
+
+주의사항
+```javascript
+videoRouter.get("/:id", see);
+videoRouter.get("/upload", upload);
+//위와 같이 '/:id'를 다른 경로의 라우터 위에 두면
+//'/upload'도 id로 인식해버리는 에러가 발생함
+
+//따라서 다음과 같이 '/:id'를 다른 라우터보다 밑에 둬야함
+videoRouter.get("/upload", upload);
+videoRouter.get("/:id", see);
+
+//id가 숫자만으로 구성된 경우
+video.Router.get("/:id(\\d+)", see);
+videoRouter.get("/upload", upload);
+//정규식으로 표기하면 순서와 상관없이 작성가능
+```
+
+# PUG
+---
+## base.pug 만들기
+---
+base.pug
+```pug
+doctype html
+html(lang="ko")
+    head
+        title #{pageTitle} | Youtube 
+        //controller로 부터 render를 통 해 받은 변수를 대입
+    body
+        block content
+    include partials/footer
+```
+home.pug
+```pug
+extends base.pug
+//base의 모든 부분을 다 가져옴
+
+// 그리고 block으로 적힌 부분만 다르게 구성
+block content 
+    h1 Home
+```
+
+## 조건문 만들기
+---
+```pug
+body
+    header
+        nav
+            ul
+                if User.loggedIn
+                    li 
+                        a(href="/logout") Log out
+                else
+                    li
+                        a(href="/login") Login
+//User의 로그인 상태에 따라 다른 메뉴를 보여줌
+```
+
+## mixin
+---
+home.pug
+```pug
+extends base
+include mixins.video
+
+block content
+    each video in videos
+        +video(video)
+```
+mixins/video.pug
+```pug
+mixin video(video)
+    div 
+        h4=video.title
+        ul
+            li #{video.rating} / 5.
+            li #{video.comments} comments
+```
+
+## 절대경로 & 상대경로
+---
+```pug
+//앞에 '/'가 없을 경우 '상대경로'
+localhost:4000/profile/edit-profile/password
+a(href='edit')
+===>localhost:4000/profile/edit-profile/edit
+
+//앞에 '/'가 있을 경우 '절대경로'
+localhost:4000/profile/edit-profile/password
+a(href='/edit')
+===>localhost:4000/edit
+```
+
+## GET & POST
+---
+GET은 검색을 할 때 사용(form에 있는 정보가 url에 들어가게 됨), 화면에 보여줄 정보를 불러올 때 사용     
+POST는 데이터 베이스의 정보를 변경하거나 로그인 할 때 사용
+- 라우터에서 사용법
+    ```javascript
+    videoRouter.get("/:id/edit, getEdit");
+    videoRouter.post("/:id/edit, postEdit);
+
+    //또는 다음과 같이 표기
+    videoRouter.route("/:id/edit").get(getEdit).post(postEdit);
+    ```
+
+## body의 정보를 가져오는 방법
+---
+```javascript
+app.use(express.urlencoded({extended: true}));
+
+export const postEdit = (req, res) => {
+    const {title} = req.body; //의 형태로 title을 받아올 수 있다.
+}
+```
+http://expressjs.com/en/5x/api.html#express.urlencoded
+- extended: This option allows to choose between parsing the URL-encoded data with the querystring library (when false) or the qs library (when true). The “extended” syntax allows for rich objects and arrays to be encoded into the URL-encoded format, allowing for a JSON-like experience with URL-encoded.    
+
+<주의사항>
+```pug
+form(method="POST")
+    input(name="title", type="text") 
+    // name을 적어주지 않으면 body로부터 값을 얻을 수 없음
+    input(type="submit", value="Upload Video")
+```
+
+
+# MongoDB
+---
+## Mongoose
+---
+설치 방법
+```javascript
+npm i mongoose
+```
+연결 방법   
+db.js
+```javascript
+import mongoose from "mongoose";
+
+mongoose.connect("mongodb://127.0.0.1:27017/원하는 이름",{
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
+
+const db = mongoose.connection;
+const handleOpen = () => console.log("✅ Connected to DB");
+const handleError = () => console.log("❌ DB Error", error);
+db.on("error", handleError);
+db.once("open", handleOpen);
+```
+init.js
+```javascript
+import "./";
+```
+
+## Video Model 만들기
+---
+Video.js
+```javascript
+import mongoose from "mongoose";
+
+const videoSchema = new mongoose.Schema({
+    title: String,
+    description: String,
+    createdAt: Date,
+    hashtags: [{ type: String }],
+    meta: {
+        views: Number,
+        rating: Number,
+    }
+})
+
+const Video = mongoose.model("Video", videoSchema);
+export default Video;
+```
+
+init.js
+```javascript
+import "./models/Video";
+```
+
+videoController.js
+```javascript
+import Video from "../models/Video";
+```
