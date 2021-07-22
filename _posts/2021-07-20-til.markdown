@@ -126,15 +126,16 @@ interface IPerson {
     ```
 
 ## 타입 단언
-    ```javascript 
-    export default interface INameable {
-        name: string
-    },
-    //----------------다른파일--------------------
-    import INameable from './INameable'
-    let obj: object = {name: 'Jack'}
-    
-    let name1 = (<INameable>obj).name
-    let name2 = (obj as INameable).name
-    console.log(name1, name2) // Jack Jack
-    ```
+---
+```javascript 
+export default interface INameable {
+    name: string
+},
+//----------------다른파일--------------------
+import INameable from './INameable'
+let obj: object = {name: 'Jack'}
+
+let name1 = (<INameable>obj).name
+let name2 = (obj as INameable).name
+console.log(name1, name2) // Jack Jack
+```

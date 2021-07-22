@@ -6,7 +6,8 @@
 .highlight .c { color: rgb(162, 154, 142); font-style: italic; }
 // .highlight .c { color: #999988; font-style: italic; }
 .highlight .err { color: #a61717; background-color: #e3d2d2; }
-.highlight .k { font-weight: bold; }
+.highlight .k { color: #35ecec; font-weight: bold; }
+// .highlight .k { font-weight: bold; }
 .highlight .o { font-weight: bold; }
 .highlight .cm { color: rgb(162, 154, 142); font-style: italic; }
 // .highlight .cm { color: #999988; font-style: italic; }
@@ -27,16 +28,18 @@
 .highlight .gu { color: #800080; font-weight: bold; }
 .highlight .gt { color: #aa0000; }
 .highlight .kc { font-weight: bold; }
-.highlight .kd { font-weight: bold; }
+.highlight .kd { color: #d04fd0; font-weight: bold; }
+// .highlight .kd { font-weight: bold; }
 .highlight .kn { font-weight: bold; }
 .highlight .kp { font-weight: bold; }
-.highlight .kr { font-weight: bold; }
+.highlight .kr { color: purple; font-weight: bold; }
+// .highlight .kr { font-weight: bold; }
 .highlight .kt { color: #445588; font-weight: bold; }
 .highlight .m { color: #009999; }
 .highlight .s { color: #dd1144; }
 .highlight .n { color: rgb(200, 195, 188); }
 // .highlight .n { color: #333333; }
-.highlight .na { color: rgb(114, 255, 255); }
+.highlight .na { color: white; }
 // .highlight .na { color: teal; }
 .highlight .nb { color: rgb(79, 211, 255); }
 // .highlight .nb { color: #0086b3; }
@@ -54,7 +57,7 @@
 // .highlight .mf { color: #009999; }
 .highlight .mh { color: rgb(97, 255, 255); }
 // .highlight .mh { color: #009999; }
-.highlight .mi { color: rgb(97, 255, 255); }
+.highlight .mi { color: #fd8e00; }
 // .highlight .mi { color: #009999; }
 .highlight .mo { color: rgb(97, 255, 255); }
 // .highlight .mo { color: #009999; }
@@ -64,7 +67,7 @@
 // .highlight .sc { color: #dd1144; }
 .highlight .sd { color: rgb(239, 53, 100); }
 // .highlight .sd { color: #dd1144; }
-.highlight .s2 { color: rgb(239, 53, 100); }
+.highlight .s2 { color: #ffe100; }
 // .highlight .s2 { color: #dd1144; }
 .highlight .se { color: rgb(239, 53, 100); }
 // .highlight .se { color: #dd1144; }
