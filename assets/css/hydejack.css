@@ -107,7 +107,8 @@
 }
 
 .markdown-body pre>code {
-  color: #333;
+  color: rgb(200, 195, 188);
+  /* color: #333; */
   padding: 0;
   margin: 0;
   font-size: 100%;
