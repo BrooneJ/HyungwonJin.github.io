@@ -258,8 +258,34 @@ const User = mongoose.model("User", userSchema);
 
 ## $or 기능
 ---
+[$or 내용](https://docs.mongodb.com/manual/reference/operator/query/or/)
 $or 기능은 둘 중 하나도 해당 되면 true를 반환한다.
 ```javascript
 const exists = await User.exists({ $or: [{ username }, { email }] });
 // $or을 넣으면 둘 중 하나도 해당 되면 true를 반환한다.
+```
+Search에서도 사용가능
+```javascript
+export const search = async (req, res) => {
+    const { keyword } = req.query;
+    let videos = [];
+    if(keyword){
+        videos = await Video.find({ $or: [ 
+            //주의한 점은 요소마다 {}로 감싸줘야한다.
+            //{title: {}}, {descriptions: {}}
+            {
+                title: {
+                    $regex: new RegExp(keyword, "i"),
+                }
+            },
+            {
+                description: {
+                    $regex: new RegExp(keyword, "i"),
+                }
+            }
+        ]})
+       console.log(videos);
+    }
+    return res.render("search", { pageTitle: "Search", videos })
+}
 ```
