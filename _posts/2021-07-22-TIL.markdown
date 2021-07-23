@@ -44,7 +44,7 @@ touch babel.config.json
 v
 babel.config.json파일에 다음을 입력
 {
-    "presets": ["@babel/preset-env]
+    "presets": ["@babel/preset-env"]
 }
 npm i @babel/preset-env --save-dev
 npm i @babel/node 
@@ -247,7 +247,7 @@ POST는 데이터 베이스의 정보를 변경하거나 로그인 할 때 사�
 - 라우터에서 사용법
     ```javascript
     videoRouter.get("/:id/edit, getEdit");
-    videoRouter.post("/:id/edit, postEdit);
+    videoRouter.post("/:id/edit, postEdit");
 
     //또는 다음과 같이 표기
     videoRouter.route("/:id/edit").get(getEdit).post(postEdit);
@@ -265,7 +265,7 @@ export const postEdit = (req, res) => {
 http://expressjs.com/en/5x/api.html#express.urlencoded
 - extended: This option allows to choose between parsing the URL-encoded data with the querystring library (when false) or the qs library (when true). The “extended” syntax allows for rich objects and arrays to be encoded into the URL-encoded format, allowing for a JSON-like experience with URL-encoded.    
 
-<주의사항>
+주의사항
 ```pug
 form(method="POST")
     input(name="title", type="text") 
