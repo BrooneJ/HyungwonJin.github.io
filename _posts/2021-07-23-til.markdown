@@ -1,0 +1,177 @@
+---
+layout: post
+title:  "210723-TIL(mongoDB)"
+subtitle:   "TIL-210723"
+categories: til
+tags: til
+comments: false
+---
+
+## mongoDB에서 find() 사용법(callback, promise)
+---
+```javascript
+//callback 방식
+// 두 번째 인자에서 videos 값을 가져올 수 있음
+export const home = (req, res) => {
+    video.find({}, (error, videos) => {
+        return res.render("");
+        //요청한 데이터가 들어올 떄까지 기다리지 않음
+    })
+}
+
+//promise 방식
+//error를 try-catch 방식으로 해결
+export const home = async (req, res) => {
+    try{
+        const videos = await Video.find({}); 
+        //이 부분에서 요청한 데이터가 들어올 떄 까지 기다림
+        return res.render("home", {pageTitle: "Home", videos });
+    } catch(error){
+        return res.render("server-error", {error});
+    }
+}
+```
+
+## mongoDB에서 save(), create() 사용법
+---
+```javascript
+//save() form
+export const postUpload = async (req, res) => {
+    const { title, description, hashtags } = req.body;
+    const video = new Video({
+        title,
+        description,
+        createdAt: Date.now(),
+        hashtags: hashtags.split(",").map((word) => `#${word}`),
+        meta: {
+            views: 0,
+            rating: 0,
+        }
+    })
+    await video.save(); //저장하기 위해서 기다려야하므로 await가 필요
+    return res.redirect("/");
+}
+
+//create() form
+export const postUpload = async (req, res) => {
+    const { title, description, hashtags } = req.body;
+    try{
+        await Video.create({ 
+        //create를 사용하면 생성자와 save()가 필요없음
+            title,
+            description,
+            createdAt: Date.now(),
+            hashtags: hashtags.split(",").map((word) => `#${word}`),
+            meta: {
+                views: 0,
+                rating: 0,
+            }
+        })
+        return res.redirect("/");
+    } catch (error) {
+        console.log(error);
+        return res.render("upload", { pageTitle: "Upload Video", errorMessage: error._message, });
+    }
+}
+```
+## mongoDB Schema에서 required, default 설정
+---
+```javascript
+const videoSchema = new mongoose.Schema({
+    createdAt: { type: Date, required: true , default: Date.now}
+    //와 같이 required를 넣어주면 빠졌을 때 오류라고 알려줌
+    meta: {
+        views: { type: Number, default: 0, required: true },
+        //default를 설정할 수 있음
+    }
+})
+```
+
+## mongoDB id를 hex로 구별하는 방법
+---
+```javascript
+videoRouter.get("/:id([0-9a-f]{24})", watch);
+```
+
+## findById()
+---
+```javascript
+export const watch = async (req, res) => {
+    const { id } = req.params;
+    const video = await Video.findById(id);
+    return res.render("watch", { video });
+}
+```
+
+## mongoDB 데이터 수정하기
+---
+```javascript
+// 첫번째 방법
+export const postEdit = async (req, res) => {
+    const {title, description, hashtags } req.body;
+    const video = await Video.findById(id);
+    if(!video){
+        return res,render("404", { pageTitle: "Video not found."});
+    }
+    video.title = title;
+    video.description = description;
+    video.hashtags = hashtags.split(",").map((word) => (word.startsWith("#") ? word : `#${word}`));
+    await Video.save();
+    return res.redirect(`/videos/${id}`);
+}
+
+//두번째 방법
+export const postEdit = async (req, res) => {
+    const {title, description, hashtags } req.body;
+    const video = await Video.findById(id);
+    if(!video){
+        return res,render("404", { pageTitle: "Video not found."});
+    }
+    await Video.findByIdAndUpdate(id, {
+        title,
+        description,
+        hashtags: hashtags.split(",").map((word) => (word.startsWith("#") ? word : `#${word}`));
+    })
+    return res.redirect(`/videos/${id}`);
+}
+```
+## exists() 사용
+---
+```javascript
+export const postEdit = async (req, res) => {
+    const {title, description, hashtags } req.body;
+    // const video = await Video.findById(id);
+    const video = await Video.exists({ _id: id });
+    //해당 id를 가진 데이터베이스가 있으면 true를 return함
+
+    if(!video){//return 받은 값을 바탕으로 판별
+        return res,render("404", { pageTitle: "Video not found."});
+    }
+    await Video.findByIdAndUpdate(id, {
+        title,
+        description,
+        hashtags: hashtags.split(",").map((word) => (word.startsWith("#") ? word : `#${word}`));
+    })
+    return res.redirect(`/videos/${id}`);
+}
+```
+
+## middleware 만들기
+---
+(https://mongoosejs.com/docs/middleware.html#pre)  
+middleware은 무조건 model이 생성되기 전에 만들어야한다.     
+Video.js
+```javascript
+videoSchema.pre("save", async function () {
+    this.hashtags = this.hashtags[0].split(',').map((word) => (word.startsWith("#") ? word : `#${word}`));
+})
+
+const Video.mongoose.model("Video", videoSchema);
+
+export default Video;
+```
+
+
+
+
+

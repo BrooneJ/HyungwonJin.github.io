@@ -72,7 +72,7 @@ const arrow2 = (a: number, b: number): number => a + b // 표현문 방식
 ---
 자바스크립트는 실행문 지향 언어(execution-oriented language)와 표현식 지향 언어(expression-oriented language) 둘 다 구현 가능
 ```javascript
-val x = if(a > b) a else b
+var x = if(a > b) a else b
 ```
 위와 같이 표현식도 구현 가능
 
