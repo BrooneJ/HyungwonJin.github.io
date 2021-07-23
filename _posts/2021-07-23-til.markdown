@@ -158,8 +158,9 @@ export const postEdit = async (req, res) => {
 
 ## middleware 만들기
 ---
-(https://mongoosejs.com/docs/middleware.html#pre)  
+[mongoose/middleware](https://mongoosejs.com/docs/middleware.html#pre)  
 middleware은 무조건 model이 생성되기 전에 만들어야한다.     
+### **첫번째 방법**   
 Video.js
 ```javascript
 videoSchema.pre("save", async function () {
@@ -171,7 +172,94 @@ const Video.mongoose.model("Video", videoSchema);
 export default Video;
 ```
 
+### **두번째 방법**     
+Video.js
+```javascript
+export const formatHashtags = (hashtags) => 
+    hashtags.split(",").map((word) => (word.startsWith("#") ? word : `#${word}`));
+```
+videoController.js
+```javascript
+import { formatHashtags } from "../models/Video.js";
+...
+await Video.findByIdAndUpdate(id, {
+    title,
+    description,
+    hashtags: formatHashtags(hashtags)
+})
+...
+```
+### **세번째 방법**
+---
+Video.js
+```javascript
+...
+videoSchema.static('formatHashtags', function(hashtags) {
+    return hashtags.split(",").map((word) => (word.startsWith("#") ? word : `#${word}`));
+})
 
+const Video = mongoose.model("Video", videoSchema);
+```
+videoController.js
+```javascript
+import { formatHashtags } from "../models/Video.js";
+...
+await Video.findByIdAndUpdate(id, {
+    title,
+    description,
+    hashtags: Video.formatHashtags(hashtags),
+})
+...
+```
 
+## findByIdAndDelete()
+---
+```javascript
+export const deleteVideo = async(req, res) => {
+    const { id } = req.params;
+    await Video.findByIdAndDelete(id);
+    return res.redirect("/");
+}
+```
 
+## User model 만들때 unique 넣기
+---
+```javascript
+onst userSchema = new mongoose.Schema({
+    email: { type: String, required: true, unique: true },
+    username: { type: String, required: true, unique: true },
+    //schema를 만들 때 {unique: true}로 입력하면 유일한 값을 가질 수 있음.
+    }
+);
+```
 
+## mongoDB 데이터베이스 명령어 몇가지
+---
+```javascript
+show db // 데이터 베이스 종류 보여줌
+show collections // 우리가 만들어 준 모델명을 제공
+db.model명.find({}) // 만든 모델명 속의 데이터 베이스를 보여줌
+db.model명.remove({}) // 데이터베이스를 비움s
+```
+
+## bcrypt 사용
+---
+[bcrypt](https://www.npmjs.com/package/bcrypt)
+User.js
+```javascript
+import bcrypt from "bcrypt";
+
+userSchema.pre("save", async function () {
+    this.password = await bcrypt.hash(this.password, 5);
+})// password를 저장하기 전에 가로채서 암호화함
+
+const User = mongoose.model("User", userSchema);
+```
+
+## $or 기능
+---
+$or 기능은 둘 중 하나도 해당 되면 true를 반환한다.
+```javascript
+const exists = await User.exists({ $or: [{ username }, { email }] });
+// $or을 넣으면 둘 중 하나도 해당 되면 true를 반환한다.
+```

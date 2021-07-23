@@ -262,7 +262,7 @@ export const postEdit = (req, res) => {
     const {title} = req.body; //의 형태로 title을 받아올 수 있다.
 }
 ```
-http://expressjs.com/en/5x/api.html#express.urlencoded
+[express/urlencoded](http://expressjs.com/en/5x/api.html#express.urlencoded)
 - extended: This option allows to choose between parsing the URL-encoded data with the querystring library (when false) or the qs library (when true). The “extended” syntax allows for rich objects and arrays to be encoded into the URL-encoded format, allowing for a JSON-like experience with URL-encoded.    
 
 주의사항
