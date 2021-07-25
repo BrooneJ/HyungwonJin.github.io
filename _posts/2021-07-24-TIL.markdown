@@ -1,0 +1,162 @@
+---
+layout: post
+title:  "210724-TIL(mongoDB)"
+subtitle:   "TIL-210724"
+categories: til
+tags: til
+comments: false
+---
+
+# mongoDB
+---
+
+## findOne()
+---
+```javascript
+const user = await User.findOne({username});
+//라고 쓰면 username에 해당하는 user 정보를 가져올 수 있음
+```
+
+## express-session
+---
+```javascript
+npm i express-session
+
+import session from "express-session";
+
+app.use(session({
+    secret: "Hello!",
+    resave: true,
+    saveUninitialized: true,
+}))
+```
+이 세션을 통해서 백엔드에서는 로그인을 하지 않은 접속자도 세션 id를 통해서 확인할 수 있음    
+세션은 서버측에서 제공해주는 데이터, 쿠키는 클라이언트측에서 저장하고 사용하는 데이터 req.sessiontStore() 사용했을때 한번은 undefined가 나온 이유가 세션은 서버에서 만들어줘야 하는데 클라이언트가 첫 요청때 세션을 가지고있을리 없으니 undefined이 나온거고 그 이후 요청부턴 첫번째 요청때 세션을 만들어서 넘겨줬으니 클라이언트가 해당 값을 쿠키에 저장하고 매 요청때마다 서버에게 전달세션은 서버가 만들어서 제공해주다보니 서버가 재부팅되면 초기화 된다. (그래서 DB에 저장해서 관리를 한다는 소리. 실 운영에선 서버가 꺼지는 일은 없으니깐.) 세션의 값은 서버가 만들어주는 고유값이다보니 해당 값을 기준으로 클라이언트에서 요청한 건에 대해 유저를 특정지을 수 있다.      
+
+
+session이라는 middleware가 브라우저에 cookie를 전송한다. cookie는 backend가 브라우저에 주는 정보인데, cookie에는 정해진 규칙이 있기 때문에, 매번 backend에 request를 할 때 브라우저는 알아서 그 request에 cookie를 덧붙이게 된다.       
+브라우저는 cookie로 뭘할지, 어디에 넣을지 모든 것을 알고 있다. 게다가 브라우저는 우리가 매번 backend localhost에 있는 URL로 request를 보낼 때마다 cookie가 request랑 같이 전송된다는 것도 알고 있다.        
+그럼 cookie에는 어떤 정보를 넣을 수 있을까? session id를 넣을 수 있다. 왜냐하면 브라우저와 backend와의 연결이 평생 보장된 것은 없기 때문이다. 상호작용이 끝나면 연결이 끝나기 때문이다. 그래서 우리는 사용자에게 session ID를 주는 것이다. 그리고 그 Session ID를 넣을 곳이 cookie이다.     
+- cookie는 백엔드와 프론트엔드 간의 정보교환을 하는 것, 단지 정보를 주고 받는 방법        
+- session ID는 cookie에 저장되는 것     
+>session id는 cookie에 저장되지만 session data는 server에 저장됨
+
+또한 req.session은 object이므로 아무거나 추가할 수 있다.        
+userController.js
+```javascript
+req.session.loggedIn = true;
+req.session.user = user;
+```
+이렇게 입력된 정보는 모든 controller에서 사용할 수 있다.
+
+## locals
+---
+locals은 어디에서나 접근할 수 있다.     
+middleware를 만들고 다음과 같이 설정하면 loggedIn, siteName, loggedInUser은 모든 pug template에서 접근할 수 있다.
+```javascript
+export const localsMiddleware = (req, res, next) => {
+    res.locals.loggedIn = Boolean(req.session.loggedIn);
+    res.locals.siteName = "Youtube";
+    res.locals.loggedInUser = req.session.user;
+    next();
+}
+```
+```pug
+nav 
+    ul 
+        li 
+            a(href="/") Home 
+        if loggedIn //local에서 받은 res.locals.loggedIn이 존재하면
+            li
+                a(href="/logout") Log Out 
+            li 
+                a(href="/my-profile") #{loggedInUser.name}의 Profile 
+```
+
+## session id를 서버에 저장하는 방법
+---
+connect-mongo를 설치
+```javascript 
+npm i connect-mongo
+```
+
+server.js
+```javascript
+import MongoStore from "connet-mongo";
+
+app.use(session({
+    secret: "Hello!",
+    resave: true,
+    saveUninitialized: true, 
+    store: MongoStore.create({ mongoUrl: "mongodb://127.0.0.1:27017/youtube"}),
+    //store 부분이 없으면 서버의 메모리에 저장되지만 이 부분으로 인해, mongoDB의 database에 저장됨
+}))
+```
+
+## saveUninitialized은 무슨 역할?
+---
+```javascript
+app.use(session({
+    ...
+    saveUninitialized: true, 
+    //이 부분은 session data에서 변경이 일어날 때만 database에 session id를 전달한다.
+    //즉, 로그인 할 때 data변경이 일어나는데 로그인을 하지 않는 유저는 database를 기록하지 않아서 낭비를 줄일 수 있다.
+    ...
+}))
+```
+## secret은 무슨 역할?
+---
+```javascript
+app.use(session({
+    secret: "Hello!",
+}))
+```
+secret은 우리가 쿠키에 sign할 때 사용하는 string이다. 쿠키에 sign하는 이유는 우리가 백엔드에 쿠키를 줬다는 것을 보여주기 위함. 왜냐하면 누군가 hijack해서 접근할 수 있기 때문이다.      
+따라서 길고 무작위로 작성해야한다.
+
+## 환경변수
+---
+dotenv 설치
+```javascript
+npm i dotenv
+
+//그리고 가능한 한 가장 먼저 import 해주어야한다.
+import "dotenv.config";
+```
+.env파일을 작성하고 외부에 노출되지 않게 할 변수들을 입력       
+또한 .env파일은 package.json과 함께 가장 바깥 디렉토리에 있어야한다.
+```.env
+COOKIE_SECRET=skdfnguberpub348bwv98dfp98vspodfbv
+DB_URL=mongodb://127.0.0.1:27017/youtube
+```
+그리고      
+server.js
+```javascript
+app.use(session({
+    secret: process.env.COOKIE_SECRET,
+    // process.env.환경변수  를 입력한다.
+    ...
+    store: MongoStore.create({ mongoUrl: process.env.DB_URL}),
+}))
+```
+
+## Github login
+---
+[developer setting](https://github.com/settings/developers)에 가서 **New OAuth App**버튼 클릭해서 생성한 다음 pug에서 다음 사항 입력
+```pug
+a(href="https://github.com/login/oauth/authorize?client_id=깃헙에 적힌 client_id입력") Continue with Github &rarr;
+```
+
+```javascript
+export const startGithubLogin = (req, res) => {
+    const baseUrl = `https://github.com/login/oauth/authorize`;
+    const config = {
+        client_id: "3d02ad92f77c400e85f4",
+        allow_signup: false,
+        scope: "read:user user:email",
+    }
+    const params = new URLSearchParams(config).toString();
+    const finalUrl = `${baseUrl}?${params}`;
+    return res.redirect(finalUrl);
+}
+```
