@@ -62,7 +62,7 @@ https://github.com/login/oauth/access_token
 ```
 
 github developer setting에서 다음과 같이 경로를 설정  
-![그림 1-1](/assets/img/web/스크린샷2021-07-25.PNG)
+![그림 1-1](/assets/img/web/2021-07-25/1-1.PNG)
 
 ```javascript
 export const finishGithubLogin = async (req, res) => {
@@ -148,7 +148,7 @@ export const finishGithubLogin = async(req, res) => {
 ```
 
 code를 access_token으로 바꿨고 access_token을 통해 Github API를 이용해서 user의 정보를 가져올 수 있다.  
- ![그림 1-1](/assets/img/web/스크린샷2021-07-25_2.PNG)
+ ![그림 1-1](/assets/img/web/2021-07-25/1-2.PNG)
 
 ## email 받아오는 부분
 
