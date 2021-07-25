@@ -1,0 +1,204 @@
+---
+layout: post
+title: "210725-TIL"
+subtitle: "TIL-210725"
+categories: til
+tags: til
+comments: false
+---
+
+## Github login (scope)
+
+---
+
+[scopes](https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps)  
+scope는 유저에게서 얼마나 많이 정보를 읽어내고 너떤 정보를 가져올 것에 대한 내용이다.
+A space-delimited list of scopes. If not provided, scope defaults to an empty list for users that have not authorized any scopes for the application. For users who have authorized scopes for the application, the user won't be shown the OAuth authorization page with the list of scopes. Instead, this step of the flow will automatically complete with the set of scopes the user has authorized for the application. For example, if a user has already performed the web flow twice and has authorized one token with user scope and another token with repo scope, a third web flow that does not provide a scope will receive a token with user and repo scope.
+
+조금 더 프로페셔널하게 scope를 설정하는 방법  
+login.pug
+
+```pug
+a(href="/users/github/start") Continue with Github &rarr;
+```
+
+userRouter.js
+
+```javascript
+import { startGithubLogin, finishGithubLogin} from "../controller/userController";
+...
+userRouter.get("/github/start", startGithubLogin);
+userRouter.get("/github/finish", finishGithubLogin);
+...
+```
+
+userController.js
+
+```javascript
+export const startGithubLogin = (req, res) => {
+  //원래는 다음과 같은 URL이 포함되어 있었지만 다루기 쉽게 분해해줘야함
+  //client_id=asdfg6s5d9fg65sd&allow_signup=false&scope=user:email
+  const baseUrl = `https://github.com/login/oauth/authorize`;
+  const config = {
+    client_id: process.env.GH_CLIENT,
+    allow_signup: false,
+    scope: "read:user user:email", //공백으로 나눠줘야함
+  };
+  const params = new URLSearchParams(config).toString();
+  //params = "client_id=asdfg6s5d9fg65sd&allow_signup=false&scope=read%3Auser+user%3Aemail"
+  const finalUrl = `${baseUrl}?${params}`;
+  return res.redirect(finalUrl);
+};
+```
+
+## Gihub에서 로그인 후 정보를 받아서 홈페이지로 돌려보내기
+
+---
+
+Github에서 받은 토큰을 Access토큰으로 바꿔줘야함
+
+```
+https://github.com/login/oauth/access_token
+```
+
+github developer setting에서 다음과 같이 경로를 설정  
+![그림 1-1](/assets/img/web/스크린샷2021-07-25.PNG)
+
+```javascript
+export const finishGithubLogin = async (req, res) => {
+  const baseUrl = "https://github.com/login/oauth/access_token";
+  const config = {
+    client_id: process.env.GH_CLIENT,
+    client_secret: process.env.GH_SECRET,
+    code: req.query.code,
+  };
+  const params = new URLSearchParams(config).toString();
+  const finalUrl = `${baseUrl}?${params}`;
+  const data = await fetch(finalUrl, {
+    method: "POST", //finalUrl에 POST request를 보냄
+    headers: {
+      Accept: "application/json", //이 부분을 넣지 않으면 json이 아니라 text가 됨
+    },
+  }); //fetch를 통해서 데이터를 받아오고
+  const json = await data.json(); //데이터에서 json을 추출함
+};
+```
+
+다시 정리  
+1.우리가 github에 user를 보내고 user가 github에 ok라고 하면 github는 코드를 준다.  
+2.이 코드를 가지고 access_token으로 바꿈
+
+```json
+{
+  "access_token": "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",
+  "token_type": "bearer",
+  "scope": "read:user,user:email"
+}
+```
+
+3.access_token으로 github API를 사용해 user정보를 가져옴  
+4. GET https://api.github.com/user을 통해 인증을 위한 access_token을 보내줌
+
+```javascript
+export const finishGithubLogin = async(req, res) => {
+    ...
+    const data = await fetch(finalUrl, {
+        method: "POST",
+        headers: {
+            Accept: "application/json", //이 부분을 넣지 않으면 json이 아니라 text가 됨
+        },
+    })
+    const json = await data.json();
+    if("access_token" in json){
+        const {access_token} = json;
+        const userRequest = await fetch("https://api/github.com/user", {
+            headers: {
+                Authorization: `token ${access_token}`;,
+            },
+        });
+    } else {
+        return res.redirect("/login");
+    }
+}
+                    | 리팩토링
+                    v
+export const finishGithubLogin = async(req, res) => {
+    ...
+    const tokenRequest = await (
+        await fetch(finalUrl, {
+            method: "POST",
+            headers: {
+                Accept: "application/json", //이 부분을 넣지 않으면 json이 아니라 text가 됨
+            },
+        })
+    ).json();
+    if("access_token" in tokenRequest){
+        const {access_token} = tokenRequest;
+        const userRequest = await(
+          await fetch("https://api.github.com/user", {
+            headers: {
+                Authorization: `token ${access_token}`,
+            },
+        })
+      ).json();
+    } else {
+        return res.redirect("/login");
+    }
+}
+```
+
+code를 access_token으로 바꿨고 access_token을 통해 Github API를 이용해서 user의 정보를 가져올 수 있다.  
+ ![그림 1-1](/assets/img/web/스크린샷2021-07-25_2.PNG)
+
+## email 받아오는 부분
+
+---
+
+email을 받아오는 부분을 따로 설정하지 않으면 user setting에서 email 설정을 private로 했을 경우 위의 사진과 같이 email: null로 받아오게 됨
+
+```javascript
+export const finishGithubLogin = async (req, res) => {
+  ...
+    const emailData = await (
+        await fetch(`${apiUrl}/user/emails`, {
+            headers: {
+              Authorization: `token ${access_token}`,
+            },
+          })
+    ).json();
+    const email = emailData.find(
+        (email) => email.primary === true && email.verified === true
+        // primary와 verified가 true인 값만 받아온다.
+    );
+    if(!email){
+        return res.redirect("/login");
+    }
+  ...
+};
+```
+
+## fetch()
+
+---
+
+노드에서 사용하는 방법
+
+```javascript
+npm i node-fetch
+```
+
+URL을 fetch하고 response를 얻는다. 그리고 res의 json을 추출한다.
+
+```javascript
+fetch(url) //url을 호출
+  .then((response) => response.json()) //호출된 response로 부터 json추출
+  .then((data) => {
+    const name = data.name;
+  });
+  |
+  | ES6로 더 깔끔하게 표현 가능
+  v
+await(
+  await fetch(url)
+).json();
+```

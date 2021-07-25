@@ -68,7 +68,7 @@ devDependencies는 개발자를 위해서 필요한 것(ex.개발자가 모던 �
 npm i nodemon
 package.json파일에서 다음을 입력
 "scripts": {
-    "dev": :nodemon --exec babel-node index.js"
+    "dev": :"nodemon --exec babel-node index.js"
 }
 ```
 
@@ -116,7 +116,7 @@ app.use("/", globalRouter);
 ```
 globalRouter.js
 ```javascript
-inport express from "express";
+import express from "express";
 import { join } from "../controller/userController";
 //낱개로 된 export를 import 할 때는 {} 를 사용함
 
