@@ -43,11 +43,12 @@ export const startGithubLogin = (req, res) => {
     client_id: process.env.GH_CLIENT,
     allow_signup: false,
     scope: "read:user user:email", //공백으로 나눠줘야함
+    //어떤 정보를 요청할 것인지 설정
   };
   const params = new URLSearchParams(config).toString();
   //params = "client_id=asdfg6s5d9fg65sd&allow_signup=false&scope=read%3Auser+user%3Aemail"
   const finalUrl = `${baseUrl}?${params}`;
-  return res.redirect(finalUrl);
+  return res.redirect(finalUrl); //user를 github로 보내줌
 };
 ```
 

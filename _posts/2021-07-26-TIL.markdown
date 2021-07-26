@@ -1,0 +1,295 @@
+---
+layout: post
+title: "210726-TIL"
+subtitle: "TIL-210726"
+categories: til
+tags: til
+comments: false
+---
+
+## email로 등록된 계정과 github에서 제공한 email이 같은 경우
+
+---
+
+```javascript
+export const finishGithubLogin = async (req, res) => {
+  ...
+    const existingUser = await User.findOne({ email: emailObj.email });
+    //github에서 제공한 email과 같은 email이 있는지 검색
+    if(existingUser){ //존재할 경우
+        req.session.loggedIn = true;
+        req.session.user = existingUser;
+        return res.redirect("/");
+    } else { //존재하지 않을 경우
+        const user = await User.create({
+            name: userData.name ? userData.name : userData.login,
+            username: userData.login,
+            email: emailObj.email,
+            password:"",
+            socialOnly: true,   //password로 로그인할 수 없다고 알려줌, 소셜로만 로그인할 수 있음.
+            location: userData.location,
+        })
+        req.session.loggedIn = true;
+        req.session.user = user;
+        return res.redirect("/");
+    }
+  ...
+
+                |
+                | 리펙토링
+                v
+export const finishGithubLogin = async (req, res) => {
+  ...
+    let user = await User.findOne({ email: emailObj.email });
+    //github에서 제공한 email과 같은 email이 있는지 검색
+    if(!user){ //존재할 경우
+        user = await User.create({
+        name: userData.name ? userData.name : userData.login,
+        username: userData.login,
+        email: emailObj.email,
+        password:"",
+        socialOnly: true,   //password로 로그인할 수 없다고 알려줌, 소셜로만 로그인할 수 있음.
+        location: userData.location,
+        })
+    }
+    req.session.loggedIn = true;
+    req.session.user = user;
+    return res.redirect("/");
+...
+```
+
+## 로그인 되어 있지 않은 유저가 로그인 되어야 사용할 수 있는 항목에 접속한 경우 대처
+
+---
+
+```javascript
+//예를 들어 로그아웃 기능
+export const protectorMiddleware = (req, res, next) => {
+  if (req.session.loggedIn) {
+    //로그인 되어 있으면
+    next(); // 진행
+  } else {
+    //로그인 안되어 있으면
+    return res.redirect("/login"); //로그인 페이지로
+  }
+};
+//userRouter.js
+userRouter.get("/logout", protectorMiddleware, logout);
+userRouter.route("/edit").all(protectorMiddleware).get(getEdit).post(postEdit);
+
+//예를 들어 로그인 기능
+export const publicOnlyMiddleware = (req, res, next) => {
+  if (!req.session.loggedIn) {
+    //로그인 안되어있으면
+    return next(); //진행
+  } else {
+    //로그인 되어있으면
+    return res.redirect("/"); //첫페이지로
+  }
+};
+//rootRouter.js
+rootRouter.route("/join").all(publicOnlyMiddleware).get(getJoin).post(postJoin);
+rootRouter
+  .route("/login")
+  .all(publicOnlyMiddleware)
+  .get(getLogin)
+  .post(postLogin);
+```
+
+## Edit User
+
+---
+
+```javascript
+export const postEdit = async (req, res) => {
+  const {
+    session: {
+      user: { _id }, //주의
+    },
+    body: { name, email, username, location },
+    //edit-profile의 name에서 가져옴
+  } = req;
+  await User.findByIdAndUpdate(_id, {
+    name,
+    email,
+    username,
+    location,
+  });
+  return res.render("edit-profile");
+};
+```
+
+이렇게만 바꾸면 DB에서는 수정되지만 화면에서는 수정이 안됨  
+즉, DB에서 db.user.find({})로 목록을 보면  
+변경 전  
+![그림 1-1](/assets/img/web/2021-07-26/1-1.png)  
+변경 후  
+![그림 1-1](/assets/img/web/2021-07-26/1-2.png)  
+위 그림과 같이 email 부분과 location부분이 바뀌었지만
+
+![그림 1-1](/assets/img/web/2021-07-26/1-3.png)  
+Edit profile화면의 값은 그대로이다.
+
+그 이유는 DB는 업데이트 됐지만 sessoin은 업데이트 되지 않았기 때문이다.
+
+```javascript
+//  첫번째 방법
+export const postEdit = async (req, res) => {
+  ...
+  await User.findByIdAndUpdate(_id, {
+    name, email, username, location
+  });
+  req.session.user = {
+    ...req.session.user,
+    name,
+    email,
+    username,
+    location,
+  }
+  return res.redirect("/users/edit");
+}
+// session의 내용을 변경한 내용으로 덮어씀
+
+// 두번째 방법
+export const postEdit = async (req, res) => {
+  ...
+  const updatedUser = await User.findByIdAndUpdate(_id, {
+    name,
+    email,
+    username,
+    location,
+  }, {new: true}); // 1. _id, 2. 변경 내용, 3. 새로 쓴 내용을 덮어쓸 건지
+  req.session.user = updatedUser;
+  return res.redirect("/users/edit");
+}
+```
+
+[findByIdAndUpdate](https://mongoosejs.com/docs/api/model.html#model_Model.findByIdAndUpdate)
+
+> [options.new=false] «Boolean» By default, findByIdAndUpdate() returns the document as it was before update was applied. If you set new: true, findOneAndUpdate() will instead give you the object after update was applied. To change the default to true, use mongoose.set('returnOriginal', false);.
+
+## es6에서 변수 설정
+
+---
+
+```javascript
+const {
+  session: {
+    user: { _id, email: _email, username: _username },
+  },
+  body: { name, email, username, location },
+} = req;
+//이런 식으로 이름이 같은 email 변수가 있을 경우
+//한 개는 email: _email과 같은 형태로 하면 충돌이 일어나지 않음
+```
+
+## 비밀번호 변경
+---
+```javascript
+export const postChangePassword = async (req, res) => {
+  const {
+    session: {
+      user: { _id, password },  //세션에 저장된 현재 비밀번호
+    },
+    body: { oldPassword,
+      newPassword, //새로 바뀔 비밀번호
+      newPasswordConfirmation, },
+  } = req;
+  const ok = await bcrypt.compare(oldPassword, password); 
+  //바꾸기 전 비번을 제대로 입력했는지 확인
+  if (!ok) { //일치하지 않을 경우
+    return res.status(404).render("users/change-password", { pageTitle: "Change Password", errorMessage: "The current password is incorrect." })
+  }
+
+  if (newPassword !== newPasswordConfirmation) { //새 비밀번호가 일치하지 않을 경우
+    return res.status(404).render("users/change-password", { pageTitle: "Change Password", errorMessage: "The password does not match the confirmation." })
+  }
+  const user = await User.findById(_id); //User모델에 있는 save trigger사용함
+  user.password = newPassword;
+  await user.save();
+  req.session.user.password = user.password; //세션 값을 업데이트 해줘야함
+  return res.redirect("/");
+}
+            |
+            | 리펙토링
+            v
+export const postChangePassword = async (req, res) => {
+  ...
+  const user = await User.findById(_id); //User모델에 있는 save trigger사용함
+  const ok = await bcrypt.compare(oldPassword, user.password);  <-
+  //바꾸기 전 비번을 제대로 입력했는지 확인
+  if (!ok) { //일치하지 않을 경우
+    return res.status(404).render("users/change-password", { pageTitle: "Change Password", errorMessage: "The current password is incorrect." })
+  }
+
+  if (newPassword !== newPasswordConfirmation) { //새 비밀번호가 일치하지 않을 경우
+    return res.status(404).render("users/change-password", { pageTitle: "Change Password", errorMessage: "The password does not match the confirmation." })
+  }
+  user.password = newPassword;
+  await user.save();
+  return res.redirect("/");
+}            
+```
+User 모델 트리거
+```javascript
+userSchema.pre("save", async function () {
+    this.password = await bcrypt.hash(this.password, 5);
+})
+```
+
+## multer를 이용해 파일 업로드
+---
+[multer](https://www.npmjs.com/package/multer)
+```javascript
+npm i multer
+```
+edit-profile.pug
+```pug
+form(method="POST", enctype="multipart/form-data") //multer를 사용하기 위한 form
+        label(for="avatar") Avatar 
+        input(type="file", id="avatar", name="avatar", accept="image/*") 
+```
+
+middleware.js
+```javascript
+export const uploadFiles = multer({ dest: "uploads/" })
+```
+userRouter.js
+```javascript
+userRouter.route("/edit").all(protectorMiddleware).get(getEdit).post(uploadFiles.single("avatar"), postEdit);
+// "/edit"에서 pug에서 받은 파일 정보를 받아 multer는 파일을 uploads폴더에 저장한 후 그 정보를 postEdit에 전달
+//single은 파일 1개를 전송한다는 뜻이고 ()속의 "avatar"는 pug의 name="avatar"와 같아야한다.
+```
+
+## avatar 설정
+---
+```javascript
+export const postEdit = async (req, res) => {
+  ...
+  const {
+    session: {
+      user: { _id, email: sessionEmail, username: sessionUsername, avatarUrl },
+    },
+    body: { name, email, username, location },
+    file, // 추가
+  } = req;
+
+  const updatedUser = await User.findByIdAndUpdate(_id, {
+    avatarUrl: file ? file.path : avatarUrl,
+    // avatar input에 파일을 넣어 변경해서 undefined이 아닌 경우 file.path로 새이미지 파일 설정
+    // 사진을 변경하지 않을 경우 원래 있던 req.session.user.avatarUrl을 그대로 사용
+    ...
+}
+```
+하지만 이렇게 설정해 준 이미지 파일은 브라우저는 display하지 못한다.   
+왜냐하면 src="/uploads"라는 경로를 읽는 방법을 알려주지 않았기 때문에 
+![그림1-1](/assets/img/web/2021-07-26/1-4.png)    
+따라서    
+server.js
+```javascript
+app.use("/uploads", express.static("uploads"));
+//이 경로를 입력해주면
+```
+![그림1-1](/assets/img/web/2021-07-26/1-5.png)    
+그림과 같이 이미지를 불러들인다.
+
