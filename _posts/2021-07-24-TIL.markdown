@@ -30,13 +30,14 @@ app.use(session({
     saveUninitialized: true,
 }))
 ```
-이 세션을 통해서 백엔드에서는 로그인을 하지 않은 접속자도 세션 id를 통해서 확인할 수 있음    
-세션은 서버측에서 제공해주는 데이터, 쿠키는 클라이언트측에서 저장하고 사용하는 데이터 req.sessiontStore() 사용했을때 한번은 undefined가 나온 이유가 세션은 서버에서 만들어줘야 하는데 클라이언트가 첫 요청때 세션을 가지고있을리 없으니 undefined이 나온거고 그 이후 요청부턴 첫번째 요청때 세션을 만들어서 넘겨줬으니 클라이언트가 해당 값을 쿠키에 저장하고 매 요청때마다 서버에게 전달세션은 서버가 만들어서 제공해주다보니 서버가 재부팅되면 초기화 된다. (그래서 DB에 저장해서 관리를 한다는 소리. 실 운영에선 서버가 꺼지는 일은 없으니깐.) 세션의 값은 서버가 만들어주는 고유값이다보니 해당 값을 기준으로 클라이언트에서 요청한 건에 대해 유저를 특정지을 수 있다.      
+- 이 세션을 통해서 백엔드에서는 로그인을 하지 않은 접속자도 세션 id를 통해서 확인할 수 있음         
+- 세션은 서버측에서 제공해주는 데이터, 쿠키는 클라이언트측에서 저장하고 사용하는 데이터 
+- req.sessiontStore() 사용했을때 한번은 undefined가 나온 이유가 세션은 서버에서 만들어줘야 하는데 클라이언트가 첫 요청때 세션을 가지고 있을리 없으니 undefined이 나온거고 그 이후 요청부턴 첫번째 요청때 세션을 만들어서 넘겨줬으니 클라이언트가 해당 값을 쿠키에 저장하고 매 요청때마다 서버에게 전달세션은 서버가 만들어서 제공해주다보니 서버가 재부팅되면 초기화 된다. (그래서 DB에 저장해서 관리를 한다는 소리. 실 운영에선 서버가 꺼지는 일은 없으므로) 세션의 값은 서버가 만들어주는 고유값이다보니 해당 값을 기준으로 클라이언트에서 요청한 건에 대해 유저를 특정지을 수 있다.      
 
 
-session이라는 middleware가 브라우저에 cookie를 전송한다. cookie는 backend가 브라우저에 주는 정보인데, cookie에는 정해진 규칙이 있기 때문에, 매번 backend에 request를 할 때 브라우저는 알아서 그 request에 cookie를 덧붙이게 된다.       
-브라우저는 cookie로 뭘할지, 어디에 넣을지 모든 것을 알고 있다. 게다가 브라우저는 우리가 매번 backend localhost에 있는 URL로 request를 보낼 때마다 cookie가 request랑 같이 전송된다는 것도 알고 있다.        
-그럼 cookie에는 어떤 정보를 넣을 수 있을까? session id를 넣을 수 있다. 왜냐하면 브라우저와 backend와의 연결이 평생 보장된 것은 없기 때문이다. 상호작용이 끝나면 연결이 끝나기 때문이다. 그래서 우리는 사용자에게 session ID를 주는 것이다. 그리고 그 Session ID를 넣을 곳이 cookie이다.     
+- session이라는 middleware가 브라우저에 cookie를 전송한다. cookie는 backend가 브라우저에 주는 정보인데, cookie에는 정해진 규칙이 있기 때문에, 매번 backend에 request를 할 때 브라우저는 알아서 그 request에 cookie를 덧붙이게 된다.       
+- 브라우저는 cookie로 뭘할지, 어디에 넣을지 모든 것을 알고 있다. 게다가 브라우저는 우리가 매번 backend localhost에 있는 URL로 request를 보낼 때마다 cookie가 request랑 같이 전송된다는 것도 알고 있다.        
+- 그럼 cookie에는 어떤 정보를 넣을 수 있을까? session id를 넣을 수 있다. 왜냐하면 브라우저와 backend와의 연결이 평생 보장된 것은 아니기 때문이다. 상호작용이 끝나면 연결이 끝난다. 
 - cookie는 백엔드와 프론트엔드 간의 정보교환을 하는 것, 단지 정보를 주고 받는 방법        
 - session ID는 cookie에 저장되는 것     
 >session id는 cookie에 저장되지만 session data는 server에 저장됨
@@ -53,6 +54,7 @@ req.session.user = user;
 ---
 locals은 어디에서나 접근할 수 있다.     
 middleware를 만들고 다음과 같이 설정하면 loggedIn, siteName, loggedInUser은 모든 pug template에서 접근할 수 있다.
+middleware.js
 ```javascript
 export const localsMiddleware = (req, res, next) => {
     res.locals.loggedIn = Boolean(req.session.loggedIn);
@@ -60,6 +62,14 @@ export const localsMiddleware = (req, res, next) => {
     res.locals.loggedInUser = req.session.user;
     next();
 }
+```
+server.js
+```javascript
+app.use(localsMiddleware);//다른 경로를 불러오기 전에 먼저 불러 올 수 있도록
+app.use("/uploads", express.static("uploads"));
+app.use("/", rootRouter);
+app.use("/videos", videoRouter);
+app.use("/users", userRouter);
 ```
 ```pug
 nav 
@@ -75,7 +85,9 @@ nav
 
 ## session id를 서버에 저장하는 방법
 ---
-connect-mongo를 설치
+[connect-mongo](https://www.npmjs.com/package/connect-mongo)를 설치     
+connect-mongo를 쓰는 이유? 세션은 서버의 메모리에 저장되는데 새로고침을 하면 로그인 정보가 사라진다. 따라서 로그인 세션을 유지하기 위해서 mongoStore(DB)에 저장해서 새로고침과 관계없이 세션을 유지하도록한다.        
+MongoDB session store for Connect and Express 
 ```javascript 
 npm i connect-mongo
 ```

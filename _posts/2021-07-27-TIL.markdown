@@ -1,0 +1,295 @@
+---
+layout: post
+title: "210727-TIL"
+subtitle: "TIL-210727"
+categories: til
+tags: til
+comments: false
+---
+
+## video Upload
+---
+```pug
+form(method="POST", enctype="multipart/form-data")
+        label(for="video")  Video File 
+        input(type="file", accept="video/*", required, id="video", name="video")
+        //'id'는 label과 함께 쓸 때는 무조건 있어야 사용할 수 있다.
+        //multer middleware를 사용하기 위해서 name이 필요
+```
+videoController.js
+```javascript
+export const postUpload = async (req, res) => {
+    const file = req.file; //multer가 제공해주는 req.file 그리고 안에 path가 들어있음
+    const { title, description, hashtags } = req.body;
+    //const video = new Video({
+    try {
+        await Video.create({
+            title,
+            description,
+            fileUrl: file.path, // 경로 추가
+            hashtags: Video.formatHashtags(hashtags),
+        })
+     ...
+}
+```
+Video.js        
+```javascript
+const videoSchema = new mongoose.Schema({
+    title: { type: String, required: true, trim: true, maxLength: 80 },
+    fileUrl: { type: String, required: true }, // 지금까지 없었던 fileUrl을 추가
+    description: { type: String, required: true, trim: true, minLength: 20 },
+    ...
+})
+```
+videoRouter.js
+```javascript
+videoRouter.route("/upload").all(protectorMiddleware).get(getUpload).post(videoUpload.single("video"), postUpload);
+// middleware 추가
+```
+## 파일 사이즈 제한하기
+---
+middleware.js       
+```javascript
+export const videoUpload = multer({
+    dest: "uploads/videos/", limits: {
+        fileSize: 10000000,
+        //10MB로 파일사이즈를 제한
+    }
+});
+```
+
+## video 보는 방법
+---
+watch.pug
+```pug
+block content
+    video(src="/" + video.fileUrl, controls) 
+    // video.fileUrl 앞에 "/"를 꼭 넣어줘야한다.
+    // 재생하기 위해서 controls를 넣어야함, 안넣으면 재생 안됨
+```
+
+## Connect Video Model and Video Model
+---
+Video.js
+```javascript
+const videoSchema = new mongoose.Schema({
+    title: { type: String, required: true, trim: true, maxLength: 80 },
+    ...
+    owner: { 
+        type: mongoose.Schema.Types.ObjectId, //owner의 id
+        required: true, 
+        ref: "User", //어떤 model에 속한 owner인가? User model에 속한 id
+    }
+    //mongoose에게 owner의 id를 저장하겠다고 알려줘야함.
+    //하지만 아직 어떤 model과 연결할지 알려주지 않음
+})
+```
+videoController.js
+```javascript
+export const postUpload = async (req, res) => {
+    const { user: { _id } } = req.session;
+    // session에서 _id값을 가져옴
+    ...
+    try {
+        await Video.create({
+            title,
+            description,
+            fileUrl,
+            owner: _id, //owner라는 변수에 _id 넣음
+            hashtags: Video.formatHashtags(hashtags),
+        })
+    ...
+}
+```
+
+## video 재생화면에 게시자 이름 넣기
+---
+videoController.js
+```javascript
+export const watch = async (req, res) => {
+    const { id } = req.params;
+    const video = await Video.findById(id); //id는 동영상의 id
+    const owner = await User.findById(video.owner); //video.owner의 id는 유저의 id
+    if (!video) {
+        return res.status(404).render("404", { pageTitle: "Video not found." });
+    }
+    return res.render("watch", { pageTitle: video.title, video, owner });
+    //owner를 pug로 보냄
+}
+```
+watch.pug
+```pug
+div     
+        small Uploaded by #{owner.username}
+    if String (video.owner) === String(loggedInUser._id) //같을때만 보여줌
+        a(href=`${video.id}/edit`) Edit Video &rarr; 
+        br
+        a(href=`${video.id}/delete`) Delete Video &rarr;
+```
+
+## populate() 사용하기
+---
+populate를 사용하면 한 model에 다른 model의 정보를 표시할 수 있게 된다. 예를 들어 다음과 같이 video model에 user model을 표시할 수 있게 된다.
+
+<br/>     
+
+videoController.js의 populate()를 적용하기전 모습
+```javascript
+export const watch = async (req, res) => {
+    const { id } = req.params;
+    const video = await Video.findById(id); //id는 동영상의 id
+    const owner = await User.findById(video.owner); //video.owner의 id는 유저의 id
+    if (!video) {
+        return res.status(404).render("404", { pageTitle: "Video not found." });
+    }
+    return res.render("watch", { pageTitle: video.title, video, owner });
+    //owner를 pug로 보냄
+}
+```
+<br/>       
+
+owner값이 단순히 문자열로 표기됨        
+![그림 1-1](/assets/img/web/2021-07-27/1-1.png)  
+
+</br>
+
+videoController.js의 populate()를 적용한 후 모습
+```javascript
+export const watch = async (req, res) => {
+    const { id } = req.params;
+    const video = await Video.findById(id).populate("owner");
+    if (!video) {
+        return res.status(404).render("404", { pageTitle: "Video not found." });
+    }
+    return res.render("watch", { pageTitle: video.title, video });
+    //owner를 pug로 보냄
+}
+```
+Video.js
+```javascript
+const videoSchema = new mongoose.Schema({
+    ...
+    owner: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" }
+    //ref: "User"에서 User model을 참조한다고 했기 때문에 가능
+})
+```
+<br/>
+
+owner값이 필요한 정보들로 채워짐
+![그림 1-1](/assets/img/web/2021-07-27/1-2.png)  
+
+<br/>
+
+## 유저가 작성한 게시물 전부 보기
+---
+- populate를 도입하기전     
+
+<br/>
+
+userController.js
+```javascript
+export const see = async (req, res) => {
+  ...
+  const videos = await Video.find({ owner: user._id });
+  // owner가 user._id와 일치하는 게시물을 전부 찾음
+  ...
+  return res.render("users/profile", { pageTitle: user.name, user, videos })
+};
+```
+<br/>
+
+profile.pug
+```pug
+extends ../base
+include ../mixins/video
+
+block content 
+    each video in videos 
+        +video(video)
+    else 
+        li Sorry nothing found.
+```
+<br/>
+
+User.js
+```javascript
+const userSchema = new mongoose.Schema({
+    ...
+    videos: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video" }],
+    // 한명의 user에 여러 개의 video가 들어갈 수 있으므로 array로 저장
+    //ref는 Video 스키마를 참조
+}
+);
+```
+
+<br/>
+
+- populate를 도입한 후      
+userController.js
+```javascript
+export const see = async (req, res) => {
+  const { id } = req.params;
+  const user = await User.findById(id).populate("videos");
+  //아랫 그림의 video를 보면 원래는 문자열이 있던 것이 obj가 되었다.
+  ...
+  return res.render("users/profile", { pageTitle: user.name, user })
+};
+```
+![그림 1-1](/assets/img/web/2021-07-27/1-3.png)  
+
+<br/>
+
+profile.pug
+```pug
+extends ../base
+include ../mixins/video
+
+block content 
+    each video in user.videos //user를 넘겨줌
+        +video(video)
+    else 
+        li Sorry nothing found.
+```
+
+## save()를 했을 때 일어나는 문제
+---
+videoController.js
+```javascript
+export const postUpload = async (req, res) => {
+    const { user: { _id } } = req.session;
+    ...
+    try {
+        const newVideo = await Video.create({ // 새비디오를 게시
+            title,
+            description,
+            fileUrl,
+            owner: _id, // 현재 session으로 로그인 된 유저의 id
+            hashtags: Video.formatHashtags(hashtags),
+        })
+        const user = await User.findById(_id); //현재 로그인한 유저의 id로 유저정보 찾음
+        user.videos.push(newVideo); //유저정보의 video 목록에 현재 만든 video 정보를 입력
+        user.save(); // 바뀐 비디오 배열 저장
+        //여기서 저장이 일어날 때 비밀번호 hash 변경이 일어남
+        return res.redirect("/");
+    ...
+}
+```
+<br/>
+
+User.js
+```javascript
+userSchema.pre("save", async function () {
+    this.password = await bcrypt.hash(this.password, 5);
+    //현재 User 파일에서 save할 때 마다 비밀번호를 바꿔주게 되어있음
+})
+//video를 업로드 할 때로 hash변경이 일어나고 있으므로 비밀번호가 바뀔 떄만
+//hash변경이 일어나도록 설정
+                        |
+                        v
+userSchema.pre("save", async function () {
+    if (this.isModified("password")) {
+        this.password = await bcrypt.hash(this.password, 5);
+    }
+})
+```
+
