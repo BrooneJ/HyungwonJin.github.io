@@ -119,7 +119,7 @@ export const watch = async (req, res) => {
 ```
 watch.pug
 ```pug
-div     
+    div     
         small Uploaded by #{owner.username}
     if String (video.owner) === String(loggedInUser._id) //같을때만 보여줌
         a(href=`${video.id}/edit`) Edit Video &rarr; 
