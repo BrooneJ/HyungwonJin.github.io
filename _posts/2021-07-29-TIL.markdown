@@ -1,0 +1,254 @@
+---
+layout: post
+title: "210729-TIL"
+subtitle: "TIL-210729"
+categories: til
+tags: til
+comments: false
+---
+
+## webpack에서 entry에 여러 파일리스트 넣기
+---
+webpack.config.js
+```javascript
+module.exports = {
+    //entry: "./src/client/js/main.js",
+    entry: {
+        main: "./src/client/js/main.js",
+        videoPlayer: "./src/slient/js/videoPlayer.js"
+    },
+    ...
+    output: {
+        filename: "js/main.js",
+        path: path.resolve(__dirname, "assets"),
+        clean: true,
+    },
+}
+```
+이 상태로 실행하면 entry파일은 2개인데 output파일의 filename은 1개이기 때문에 오류가 발생함     
+![그림 1-1](/assets/img/web/2021-07-29/1-1.png)  
+webpack.config.js
+```javascript
+module.exports = {
+    
+    ...
+    output: {
+        // filename: "js/main.js",
+        filename: "js/[name].js", //이름 부분을 [name]으로 바꿔주면 잘 동작함
+        path: path.resolve(__dirname, "assets"),
+        clean: true,
+    },
+}
+```
+
+## 볼륨 Mute 기능
+---
+<https://developer.mozilla.org/ko/docs/Web/HTML/Element/Video>      
+```javascript
+const video = document.querySelector("video");
+// video 변수를 가지고 와서
+
+let volumeValue = 0.5; // 처음 셋팅된 기본 볼륨
+video.volume = volumeValue; //볼륨 값을 실시간으로 변경시킴
+
+const handleMute = (e) => {
+    if (video.muted) { //video.muted 기능으로 뮤트를 설정할 수 있다.
+        video.muted = false;
+    } else {
+        video.muted = true;
+    }
+    muteBtn.innerText = video.muted ? "Unmute" : "Mute";
+    volumeRange.value = video.muted ? 0 : volumeValue;
+}
+
+muteBtn.addEventListener("click", handleMute); //클릭으로 mute되었는지 확인
+```
+
+## pause 기능
+---
+```javascript
+const handlePlayClick = (e) => {
+    if (video.paused) { // video.paused 변수로 재생과 정지를 설정함
+        video.play();
+    } else {
+        video.pause();
+    }
+    playBtn.innerHTML = video.paused ? "Play" : "Pause";
+}
+```
+
+## 실시간 볼륨 변경
+---
+```javascript
+const volumeRange = document.getElementById("volume");
+
+let volumeValue = 0.5;
+video.volume = volumeValue;
+
+const handleVolumeChange = (event) => {
+    const { target: { value } } = event;
+    if (video.muted) {
+        video.muted = false;
+        muteBtn.innerText = "Mute"
+    }
+    volumeValue = value; 
+    //event.target.value에서 받아오는 실시간 값을 volumeValue에 저장
+    video.volume = value;
+}
+
+volumeRange.addEventListener("input", handleVolumeChange);
+// volumeRange.addEventListener("change", handleVolumeChange);
+//change로 값을 받아오면 실시간 값을 받아올 수 없다. 따라서 input으로 해줘야한다.
+```
+
+## 실시간 재생 값 받기
+---
+<https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentTime>
+<https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/duration>
+```javascript
+const currentTime = document.getElementById("currentTime");
+const totalTime = document.getElementById("totalTime");
+
+const handleLoadedMetadata = () => {
+    totalTime.innerText = Math.floor(video.duration);
+}
+
+const handelTimeUpdate = () => {
+    currentTime.innerText = Math.floor(video.currentTime);
+}
+
+video.addEventListener("loadedmetadata", handleLoadedMetadata);
+// running Time을 받아오기 위해서는 loadedmetadata를 사용한다.
+video.addEventListener("timeupdate", handelTimeUpdate);
+// current Time을 받아오기 위해서는 timeupdate를 받아와야한다.
+```
+
+## Time format
+---
+![그림 1-1](/assets/img/web/2021-07-29/1-2.png)     
+```javascript
+const formatTime = (seconds) => new Date(seconds * 1000).toISOString().substr(11, 8);
+//이렇게 만든 Time Format을 다음 함수에 적용시키면
+const handleLoadedMetadata = () => {
+    totalTime.innerText = formatTime(Math.floor(video.duration));
+}
+
+const handelTimeUpdate = () => {
+    currentTime.innerText = formatTime(Math.floor(video.currentTime));
+}
+```
+![그림 1-1](/assets/img/web/2021-07-29/1-3.png)     
+
+## Time line 만들기
+---
+watch.pug에서 input으로 timeline을 만든다.
+```pug
+div 
+    input(type="range", step="1", value="0", min="0")#timeline
+    //-max값을 handleLoadedMetadata에서 받아오기전까지 알 수 없음
+```
+videoPlayer.js
+```javascript
+const timeline = document.getElementById("timeline");
+
+const handleLoadedMetadata = () => {
+    totalTime.innerText = formatTime(Math.floor(video.duration));
+    timeline.max = Math.floor(video.duration);
+    //Running Max Time을 timeline에 넣어줌
+    //html을 켜서 보면 max="running time"이 들어가있음
+}
+
+const handleTimelineChange = (event) => {
+    const {
+        target: { value },
+    } = event; //변경되는 값을 받아옴
+    video.currentTime = value;
+    // 변경되는 값을 현재 값으로 넣어줌
+}
+
+timeline.addEventListener("input", handleTimelineChange);
+//값이 변경될 때마다 값을 받아옴
+```
+
+## Full Screen
+---
+<https://developer.mozilla.org/ko/docs/Web/API/Fullscreen_API>      
+watch.pug
+```pug
+block content
+    div#videoContainer
+        video(src="/" + video.fileUrl) 
+```
+videoPlayer.js
+```javascript
+const fullscreenBtn = document.getElementById("fullscreen");
+const videoContainer = document.getElementById("videoContainer");
+
+const handleFullScreen = () => {
+    const fullscreen = document.fullscreenElement;
+    //full screen이 아니면 null 반환
+    if (fullscreen) {
+        document.exitFullscreen(); //풀스크린에서 빠져나옴
+        fullscreenBtn.innerText = "Enter Full Screen";
+    } else {
+        videoContainer.requestFullscreen(); //풀스크린으로 들어감
+        fullscreenBtn.innerText = "Exit Full Screen";
+    }
+}
+
+fullscreenBtn.addEventListener("click", handleFullScreen);
+```
+
+## 화면 위에 마우스가 있는지 알아내기
+---
+videoPlayer.js
+```javascript
+let controlsTimeout = null;
+//다른 함수에서도 파악할 수 있게 전역변수로
+
+const handleMouseMove = () => {
+    if (controlsTimeout) {
+        clearTimeout(controlsTimeout);
+        controlsTimeout = null;
+        // 마우스 커서가 영상 밖으로 나갔다가 다시 들어온다면
+        //카운트를 초기화 시킴
+    }
+    videoControls.classList.add("showing");
+}
+
+const handleMouseLeave = () => {
+    controlsTimeout = setTimeout(() => {
+        videoControls.classList.remove("showing");
+    }, 3000); //바로 알아내는 것이 아닌 3초의 시간을 준 뒤 
+    //showing class를 없앰
+}
+
+video.addEventListener("mousemove", handleMouseMove);
+video.addEventListener("mouseleave", handleMouseLeave);
+```
+
+## 마우스 움직임 파악
+---
+```javascript
+let controlsMovementTimeout = null;
+//영상 위에 움직임을 카운트할 변수
+
+const handleMouseMove = () => {
+    ...
+    const hideControls = () => videoControls.classList.remove("showing");
+    //showing class를 없애줌
+    if (controlsMovementTimeout) {
+        //setTimeout으로 인해 카운트 다운 값이 있을 경우만 실행
+        clearTimeout(controlsMovementTimeout);
+        // 카운드 다운 값이 있을 떄마다 이벤트를 삭제함
+        // 즉, 영상 위에서 커서를 계속 움직이면 setTimeout 이벤트가 만들어지고 지워지고를 반복
+        controlsMovementTimeout = null;
+        //카운트 다운 값을 null로 변경
+    }
+    videoControls.classList.add("showing");
+    controlsMovementTimeout = setTimeout(hideControls, 3000);
+    // 영상위에 들어오면 3초 뒤에 hideControls함수가 실행됨
+}
+
+videoContainer.addEventListener("mousemove", handleMouseMove);
+```
