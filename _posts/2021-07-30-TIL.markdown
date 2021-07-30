@@ -1,0 +1,402 @@
+---
+layout: post
+title: "210730-TIL"
+subtitle: "TIL-210730"
+categories: til
+tags: til
+comments: false
+---
+
+## 조회수 기록하기
+---
+서버 사이드 랜더링(SSR)이 아닌 프론트와 웹이 통신하는 방식으로          
+apiRouter.js파일을 만듦
+```javascript
+import express from "express";
+
+const apiRouter = express.Router();
+
+apiRouter.post("/videos/:id([0-9a-f]{24})/view")
+// node.js가 랜더링하는 방식이 아닌 프론트에서 자바스크립트로 호출하는 방식
+
+export default apiRouter;
+```
+<br/>
+
+server.js에 추가
+```javascript
+import apiRouter from "./router/apiRouter";
+
+app.use("/api", apiRouter)
+```
+
+<br/>
+
+videoController.js
+```javascript
+export const registerView = async (req, res) => {
+    const { id } = req.params;
+    const video = await Video.findById(id);
+    if (!video) {
+        // return res.status(404);
+        return res.sendStatus(404);
+        //sendstatus가 아닌 status만 쓰면 행선지가 없기 때문에 연결이 끝나지 않음
+    }
+    video.meta.views = video.meta.views + 1;
+    await video.save();
+    // return res.status(200);
+    return res.sendStatus(200);
+}
+//SSR방식이 아니기 떄문에 render를 사용하지 않는다.
+```
+
+## 동영상이 재생 종료되었을 때 조회수 올리는 방법
+---
+<https://developer.mozilla.org/ko/docs/Web/API/HTMLMediaElement>        
+<https://developer.mozilla.org/ko/docs/Learn/HTML/Howto/Use_data_attributes>            
+아직 videoPlayer.js는 video의 id를 모르므로 정보를 받아와야한다.        
+어디서 받아올 수 있을까?        
+다음과 같은 방법읍로 pug에서 받아올 수 있다.     
+```pug
+block content
+    div#videoContainer(data-id=video._id)
+    //-위와 같은 방법으로 id를 전달할 수 있다.
+```
+videoPlayer.js
+```javascript
+const handleEnded = () => {
+    const { id } = videoContainer.dataset;
+    //pug에서 전달 받은 id를 videoContainer.dataset으로 받아올 수 있다.
+    fetch(`/api/videos/${id}/view`, {
+        method: "POST", // 데이터를 변경할 것이기 때문에 get이 아닌 post로
+    });
+
+}
+
+video.addEventListener("ended", handleEnded);
+//ended라는 media element는 video 태그에만 적용된다.
+```
+
+## 비디오 녹화하기
+---
+webpack.config.js
+```javascript
+module.exports = {
+    entry: {
+        main: "./src/client/js/main.js",
+        videoPlayer: "./src/client/js/videoPlayer.js",
+->      recorder: "./src/client/js/recorder.js",
+        //경로 추가
+    },
+}
+```
+upload.pug
+```pug
+extends base.pug
+
+block content 
+    ...
+block scripts 
+    script(src="/static/js/recorder.js") 
+    //-script가 upload 페이지 위에서 실행되어야함
+```
+
+## 녹화하기 (video, audio), troubleShooting(regenerator-runtime)
+---
+<https://developer.mozilla.org/ko/docs/Web/API/MediaDevices/getUserMedia>       
+recorder.js
+```javascript
+const startBtn = document.getElementById("startBtn");
+
+const handleStart = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+    })
+    console.log(stream);
+}
+
+startBtn.addEventListener("click", handleStart);
+```
+이와 같이 입력하면 다음과 같은 에러가 뜬다.     
+![그림 1-1](/assets/img/web/2021-07-30/1-1.png)     
+<https://www.npmjs.com/package/regenerator-runtime>     
+```
+npm i regenerator-runtime
+```
+<br/>
+
+설치한 후 전역적으로 실행되도록     
+/client/js/main.js
+```javascript
+import regeneratorRuntime from "regenerator-runtime";
+import "../scss/styles.scss";
+```
+base.pug
+```pug
+script(src="/static/js/main.js") 
+block scripts 
+```
+![그림 1-1](/assets/img/web/2021-07-30/1-2.png)     
+stream을 받아올 수 있음     
+
+```javascript
+const startBtn = document.getElementById("startBtn");
+const video = document.getElementById("preview");
+
+const handleStart = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { width: 200, height: 200 },
+    })
+    video.srcObject = stream;
+    video.play();
+}
+
+startBtn.addEventListener("click", handleStart);
+```
+
+## preview 띄우기
+---
+upload.pug
+```pug
+block content 
+    div 
+        video#preview
+        button#startBtn Start Recording
+```
+recorder.js
+```javascript
+const startBtn = document.getElementById("startBtn");
+const video = document.getElementById("preview");
+
+let stream;
+let recorder;
+let videoFile;
+
+const handleDownload = () => {
+    const a = document.createElement("a");
+    // anchor를 만들어줌
+    a.href = videoFile; //만든 anchor에 파일의 URL을 걸어줌
+    a.download = "MyRecording.webm"; //다운로드
+    document.body.appendChild(a); // 링크를 document에 추가
+    a.click(); // 사용자 대신 해당 링크를 클릭
+}
+
+const handleStop = () => {
+    startBtn.innerText = "Download Recording";
+    startBtn.removeEventListener("click", handleStop);
+    startBtn.addEventListener("click", handleDownload);
+    recorder.stop();
+
+const handleStart = () => {
+    startBtn.innerText = "Stop Recording";
+    startBtn.removeEventListener("click", handleStart);
+    // 이전에 실행되었던 이벤트가 꼬이지 않게 지워준다.
+    startBtn.addEventListener("click", handleStop);
+
+    recorder = new MediaRecorder(stream);
+    //stream을 받아와서 녹화함
+    recorder.ondataavailable = (event) => {
+        //ondataavailable은 녹화가 멈추면 발생하는 event
+        videoFile = URL.createObjectURL(event.data);
+        //녹화가 정지되는 것을 감지하면 event.data에 기록된 파일을 브라우저에 저장
+        //createObjectURL은 브라우저가 생성한 URL을 우리에게 줌 -> 파일에 접근가능
+        video.srcObject = null; // 비디오 미리보기에서 srcObject를 제거함
+        video.src = videoFile; // src를 URL로 대체
+        video.loop = true;
+        video.play();
+    }
+    recorder.start();
+}
+
+const init = async () => {
+    //stream은 우리가 어딘가 넣어둘 0과 1로만 이루어진 데이터를 의미
+    stream = await navigator.mediaDevices.getUserMedia({
+        //getUserMedia는 mediaDevices라는 객체의 function인데
+        //mediaDevices는 마이크, 카메라와 같은 미디어 장비들에 접근하게 한다.
+        audio: false,
+        video: true,
+    })
+    video.srcObject = stream; //미리보기
+    video.play();
+    //stream을 video.srcObject에 담고 play시킴
+}
+
+init();
+
+startBtn.addEventListener("click", handleStart);
+
+```
+
+## FFmpeg (webm -> mp4 변환)
+---
+recorder.js
+```javascript
+import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
+const actionBtn = document.getElementById("actionBtn");
+const video = document.getElementById("preview");
+
+let stream;
+let recorder;
+let videoFile;
+
+const files = {
+    input: "recording.webm",
+    output: "output.mp4",
+    thumb: "thumbnail.jpg",
+};
+
+const downloadFile = (fileUrl, fileName) => {
+    const a = document.createElement("a");
+    a.href = fileUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+};
+
+const handleDownload = async () => {
+    actionBtn.removeEventListener("click", handleDownload);
+
+    actionBtn.innerText = "Transcoding...";
+
+    actionBtn.disabled = true;
+
+    const ffmpeg = createFFmpeg({ log: true });
+    await ffmpeg.load();
+
+    ffmpeg.FS("writeFile", files.input, await fetchFile(videoFile));
+
+    await ffmpeg.run("-i", files.input, "-r", "60", files.output);
+
+    await ffmpeg.run(
+        "-i",
+        files.input,
+        "-ss",
+        "00:00:01",
+        "-frames:v",
+        "1",
+        files.thumb
+    );
+
+    const mp4File = ffmpeg.FS("readFile", files.output);
+    const thumbFile = ffmpeg.FS("readFile", files.thumb);
+
+    const mp4Blob = new Blob([mp4File.buffer], { type: "video/mp4" });
+    const thumbBlob = new Blob([thumbFile.buffer], { type: "image/jpg" });
+
+    const mp4Url = URL.createObjectURL(mp4Blob);
+    const thumbUrl = URL.createObjectURL(thumbBlob);
+
+    downloadFile(mp4Url, "MyRecording.mp4");
+    downloadFile(thumbUrl, "MyThumbnail.jpg");
+
+    ffmpeg.FS("unlink", files.input);
+    ffmpeg.FS("unlink", files.output);
+    ffmpeg.FS("unlink", files.thumb);
+
+    URL.revokeObjectURL(mp4Url);
+    URL.revokeObjectURL(thumbUrl);
+    URL.revokeObjectURL(videoFile);
+
+    actionBtn.disabled = false;
+    actionBtn.innerText = "Record Again";
+    actionBtn.addEventListener("click", handleStart);
+};
+
+const handleStart = () => {
+    actionBtn.innerText = "Recording";
+    actionBtn.disabled = true;
+    actionBtn.removeEventListener("click", handleStart);
+    recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    recorder.ondataavailable = (event) => {
+        videoFile = URL.createObjectURL(event.data);
+        video.srcObject = null;
+        video.src = videoFile;
+        video.loop = true;
+        video.play();
+        actionBtn.innerText = "Download";
+        actionBtn.disabled = false;
+        actionBtn.addEventListener("click", handleDownload);
+    };
+    recorder.start();
+    setTimeout(() => {
+        recorder.stop();
+    }, 5000);
+};
+
+const init = async () => {
+    stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+            width: 1024,
+            height: 576,
+        },
+    });
+    video.srcObject = stream;
+    video.play();
+};
+
+init();
+
+actionBtn.addEventListener("click", handleStart);
+```
+
+middleware.js(브라우저에서 오류발생)
+```javascript
+export const sharedbufferMiddleware = (req, res, next) => {
+    res.header("Cross-Origin-Embedder-Policy", "require-corp");
+    res.header("Cross-Origin-Opener-Policy", "same-origin");
+    next();
+};
+```
+
+videoRouter.js(미들웨어 추가)
+```javascript
+videoRouter.route("/upload").all(protectorMiddleware, sharedbufferMiddleware).get(getUpload).post(videoUpload.single("video"), postUpload);
+```
+
+## 비디오랑 썹네일 올리기
+---
+videoRouter.js
+```javascript
+videoRouter
+    .route("/upload")
+    .all(protectorMiddleware, sharedbufferMiddleware)
+    .get(getUpload)
+    //.post(videoUpload.single("video"))
+    .post(videoUpload.fields([ 
+        // 여러개를 올릴 때는 single이 아니라 fields를 쓴다.
+        { name: "video", maxCount: 1 },
+        { name: "thumb", maxCount: 1 },
+    ]),
+        postUpload
+    );
+```
+videoController.js
+```javascript
+export const postUpload = async (req, res) => {
+    const { user: { _id } } = req.session;
+    // const { path } = req.file;
+    const { video, thumb } = req.files; 
+    // 두 개 이상일 때는 file이 아닌 files
+    const { title, description, hashtags } = req.body;
+
+    try {
+        const newVideo = await Video.create({ // 새비디오를 게시
+            title,
+            description,
+            fileUrl: video[0].path, // 경로 설정
+            thumbUrl: thumb[0].path, // 경로 설정
+            owner: _id,
+            hashtags: Video.formatHashtags(hashtags),
+        })
+```
+Video.js
+```javascript
+const videoSchema = new mongoose.Schema({
+    title: { type: String, required: true, trim: true, maxLength: 80 },
+    fileUrl: { type: String, required: true },
+    thumbUrl: { type: String, required: true },
+    // thumbUrl 새로 추가
+```
