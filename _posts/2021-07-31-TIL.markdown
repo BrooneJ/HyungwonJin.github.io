@@ -1,0 +1,369 @@
+---
+layout: post
+title: "210731-TIL"
+subtitle: "TIL-210731"
+categories: til
+tags: til
+comments: false
+---
+
+## flash message
+---
+<https://www.npmjs.com/package/express-flash>       
+```
+npm i express-flash
+```
+<br/>
+
+server.js
+```javascript
+app.use(flash()) // flash를 middleware로 불러옴
+app.use(localsMiddleware);
+```
+<br/>
+
+middlewares.js
+```javascript
+export const protectorMiddleware = (req, res, next) => {
+    if (req.session.loggedIn) {
+        next();
+    } else {
+        req.flash("error", "Not authorized");
+        //
+        // 보통 redirect할 때 flash message를 많이 남긴다.
+        return res.redirect("/login");
+    }
+}
+```
+<br/>
+
+flash middleware는 messages 라는 locals를 사용할 수 있게 해준다.        
+```pug
+body
+    if messages.error 
+        span=messages.error 
+```
+또는       
+views/mixins/message.pug
+```pug
+mixin message(kind, text)
+    div.message(class=kind)
+        span=text  
+```
+base.pug
+```pug
+body
+    if messages.error 
+        +message("error", messages.error)
+    if messages.error
+        +message("info", messages.info)
+    if messages.success 
+        +message("success", messages.success)
+```           
+<br/>
+
+styles.scss
+```css
+@keyframes goAway {
+    from{
+        transform: none;
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+
+.message {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    max-width: 200px;
+    padding: 10px 20px;
+    border-radius: 10000px;
+    text-align: center;
+    animation: goAway .5s ease-in-out forwards;
+    animation-delay: 5s;
+    &.error {
+        background-color: red;
+        color: white;
+    }
+}
+```
+
+## comment 기능 만들기
+---
+Comment Model 만들기        
+```javascript
+import mongoose from "mongoose";
+
+const commentSchema = new mongoose.Schema({
+    text: { type: String, required: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
+    video: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Video" },
+    createdAt: { type: Date, required: true, default: Date.now },
+});
+
+const Comment = mongoose.model("Comment", commentSchema);
+export default Comment;
+```
+<br/>
+
+Video Schema에도 video가 많은 comment를 가질 수 있도록 수정해줘야함         
+Video.js
+```javascript
+const videoSchema = new mongoose.Schema({
+    ...
+    comments: [{ type: mongoose.Schema.Types.ObjectId, required: true, ref: "Comment" }],
+    owner: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" }
+})
+```
+
+<br/>
+
+User Schema도 user가 많은 comment를 가질 수 있도록 수정해주어야함
+User.js
+```javascript
+const userSchema = new mongoose.Schema({
+    ...
+    comments: [{ type: mongoose.Schema.Types.ObjectId, required: true, ref: "Comment" }],
+    videos: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video" }],
+}
+);
+```
+1개의 video -> [여러개의 댓글]      
+1개의 user -> [여러개의 댓글]       
+
+<br/>
+
+init.js에 import해줘야함
+```javascript
+import "./models/Comment";
+```
+
+<br/>
+
+/src/client/js/commentSection.js        
+```javascript
+const videoContainer = document.getElementById("videoContainer");
+const form = document.getElementById("commentForm");
+const textarea = form.querySelector("textarea");
+const btn = form.querySelector("button");
+
+const handleSubmit = (event) => {
+    event.preventDefault(); //새로고침을 막아줌
+    const text = textarea.value;
+    const video = videoContainer.dataset.id;
+    //watch.pug에서 div#videoContainer(data-id=video._id)에 있는
+    // dataset.id를 가져옴
+}
+
+btn.addEventListener("submit", handleSubmit);
+```
+
+<br/>
+
+watch.pug
+```pug
+    if loggedIn
+        div.video__comments
+            form.video__comment-form#commentForm
+                textarea(cols="30", rows="10", placeholder="Write a nice comment...")
+                button Add Comment
+block scripts 
+    script(src="/static/js/videoPlayer.js")
+    script(src="/static/js/commentSection.js")
+    //-commentSection을 불러옴
+```                
+
+### 위의 if loggedIn을 사용해서 댓글창을 가렸을 경우 문제점(troubleShooting)
+---
+![그림 1-1](/assets/img/web/2021-07-31/1-1.png)         
+위 그림과 같이 로그인하지 않았을 경우 #commentForm을 받아올 수 없기 때문에 에러가 발생한다.      
+
+<br/>
+
+첫번째 방법     
+watch.pug
+```pug
+if loggedIn //- loggedIn을 써서 로그인 했을 경우만 js를 로드할 수 있게 한다.
+        script(src="/static/js/commentSection.js")
+```
+
+<br/>
+
+commentSection.js
+```javascript
+const videoContainer = document.getElementById("videoContainer");
+const form = document.getElementById("commentForm");
+// const textarea = form.querySelector("textarea");
+
+const handleSubmit = (event) => {
+    event.preventDefault();
+    const textarea = form.querySelector("textarea");
+    const text = textarea.value;
+    const video = videoContainer.dataset.id;
+}
+if(form){ // form이 있을 때만  
+    btn.addEventListener("submit", handleSubmit);
+}
+```
+
+## back-end에 댓글내용을 전달
+---
+commentSection.js
+```javascript
+const handleSubmit = (event) => {
+    ...
+    const videoId = videoContainer.dataset.id;
+    // fetch를 이용해서 backend에 정보를 보냄
+    fetch(`/api/videos/${videoId}/comment`, {
+        method: "POST",
+        body: {
+            text,
+        },
+    });
+};
+//req.body에 form을 전송하게 되면 backend는 req.body. 안에서
+//모든 input을 받게된다.
+//하지만 위와 같이 그냥 body: {text}와 같은 형태로 보내도 된다.
+//fetch는 js를 통해서 request를 url 변경 없이 보낼 수 있게 만들어준다.
+```
+
+<br/>
+
+apiRouter.js
+```javascript
+import express from "express";
+import { registerView, createComment } from "../controller/videoController";
+
+const apiRouter = express.Router();
+...
+apiRouter.post("/videos/:id([0-9a-f]{24})/comment", createComment);
+//Router 만들기
+...
+```
+
+
+## back-end에 json object 보내는 방법
+---
+commentSection.js
+```javascript
+const handleSubmit = (event) => {
+    ...
+    const text = textarea.value;
+    const videoId = videoContainer.dataset.id;
+    fetch(`/api/videos/${videoId}/comment`, {
+        method: "POST",
+        headers: {  // Express에게 json을 보내고 있다고 알림
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }), // stringify로 변형해줘야함, 아니면 string 취급 받음
+        // body: {
+        //     text,
+        // },
+    });
+    textarea.value = "";
+};
+...
+```
+
+<br/>
+
+server.js
+```javascript
+app.use(express.json());
+//미들웨어를 넣어서 express가 json 오브젝트를 다룰 수 있도록 해야함
+```
+<span style="color:yellow">
+백엔드로 데이터를 보낼 때는 항상 cookie를 같이 보낸다.
+</span>
+
+## comment를 비디오 오브젝트 속에 넣기
+---
+videoController.js
+```javascript
+export const watch = async (req, res) => {
+    const { id } = req.params;
+    const video = await Video.findById(id).populate("owner").populate("comments");
+    // populate("comments")를 가져온다.
+    ...
+}
+
+
+export const createComment = async (req, res) => {
+    const {
+        session: { user },
+        body: { text },
+        params: { id },
+    } = req;
+
+    const video = await Video.findById(id);
+    if (!video) {
+        return res.sendStatus(404);
+    }
+    const comment = await Comment.create({
+        text,
+        owner: user._id,
+        video: id,
+    })
+    video.comments.push(comment._id);
+    // video 오브젝트 안에 꼭 comment._id를 넣어줘야함
+    video.save();
+    return res.sendStatus(201);
+}
+```
+
+watch.pug
+```pug
+div.video__comments
+    ul 
+        each comment in video.comments //-populate("comment")가 있었기에 가능
+            li.video__comment 
+                i.fas.fa-comment 
+                |  #{comment.text}
+```                    
+
+## 실시간으로 댓글이 달리는 것처럼 꾸미기
+---
+commentSection.js
+```javascript
+const handleSubmit = async (event) => {
+    ...
+->  const { status } = await fetch(`/api/videos/${videoId}/comment`, {
+        //status 값을 받아온다.
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+    });
+    textarea.value = "";
+    if (status === 201) {
+        // 받아온 status값이 201일 경우에만 댓글을 닮
+        addComment(text);
+        // fake comment함수
+    }
+};
+
+const addComment = (text) => {
+    const videoComments = document.querySelector(".video__comments ul");
+    // watch의 video__comments의 ul을 선택
+    const newComment = document.createElement("li");
+    newComment.className = "video__comment";
+    const icon = document.createElement("i");
+    icon.className = "fas fa-comment";
+    const span = document.createElement("span");
+    span.innerText = ` ${text}`;
+    // li의 변수명인 newComment에 icon, span을 넣음
+    newComment.appendChild(icon);
+    newComment.appendChild(span);
+    // ul의 변수명인 videocomments에 li인 newComment를 넣음
+    videoComments.prepend(newComment);
+    // appendChild는 원소가 아래로 저장되지만
+    // prepend는 원소가 앞에 저장됨
+}
+```
