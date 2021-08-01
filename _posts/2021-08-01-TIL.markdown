@@ -1,0 +1,92 @@
+---
+layout: post
+title: "210801-TIL"
+subtitle: "TIL-210801"
+categories: til
+tags: til
+comments: false
+---
+
+## 생성된 fake comment에 id 달기
+---
+watch.pug
+```pug
+div.video__comments
+    ul 
+        each comment in video.comments.reverse()
+            li.video__comment(data-id=comment._id) //- data-id를 받을 수 있게
+                ...
+```                        
+commentSection.js       
+x표가 fake comment에서도 나오도록
+```javascript
+const addComment = (text) => {
+    const videoComments = document.querySelector(".video__comments ul");
+    const newComment = document.createElement("li");
+    ...
+    const span2 = document.createElement("span");
+    span2.innerText = "❌";
+    ...
+    newComment.appendChild(span2);
+    videoComments.prepend(newComment);
+}
+```
+
+<br/>
+
+videoController.js      
+백엔드에서 프론트엔드로 json 정보를 보내주게 해줌       
+```javascript
+export const createComment = async (req, res) => {
+    const {
+        session: { user },
+        body: { text },
+        params: { id },
+    } = req;
+
+    //프론트에서 받은 정보를 추출
+
+    const video = await Video.findById(id);
+    if (!video) {
+        return res.sendStatus(404);
+    }
+
+    //프론트에서 작성한 코멘트를 백엔드에서 받아서 
+    const comment = await Comment.create({
+        text,
+        owner: user._id,
+        video: id,
+    })
+    video.comments.push(comment._id);
+    // comment 정보를 video에 저장함
+    video.save();
+    // return res.sendStatus(201);
+    return res.status(201).json({ newCommentId: comment._id });
+    // status 201을 보내고 접속을 끊는게 아닌
+    // json 정보까지 보내고 끊는 걸로 변경
+}
+```
+
+<br/>
+
+commentSection.js           
+videoController.js의 createComment에서 보낸 newCommentId를 받아서 json으로 나타내야함       
+```javascript
+const handleSubmit = async (event) => {
+    ...
+    const response = await fetch(`/api/videos/${videoId}/comment`, {
+        // comment를 작성하고 back-end로 보내면 response에 백엔드의 정보를 돌려줌
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+    });
+    textarea.value = "";
+
+    if (status === 201) {
+        const { newCommentId } = await response.json();
+        addComment(text, newCommentId);
+    }
+};
+```
