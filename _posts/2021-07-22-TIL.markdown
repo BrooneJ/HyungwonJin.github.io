@@ -65,10 +65,10 @@ devDependencies는 개발자를 위해서 필요한 것(ex.개발자가 모던 �
 ---
 파일의 내용이 변경되면 저장할 때 알아서 서버를 껐다가 다시 켜주는 기능
 ```javascript
-npm i nodemon
-package.json파일에서 다음을 입력
+//npm i nodemon
+//package.json파일에서 다음을 입력
 "scripts": {
-    "dev": :"nodemon --exec babel-node index.js"
+    "dev": "nodemon --exec babel-node index.js"
 }
 ```
 

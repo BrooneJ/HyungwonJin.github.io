@@ -1,0 +1,113 @@
+---
+layout: post
+title: "210802-TIL"
+subtitle: "TIL-210802"
+categories: til
+tags: til
+comments: false
+---
+
+## 요소 클릭 할 떄 주의할 점
+---
+리스트 셋의 경우 요소에 id나 class를 줘서 클릭 값을 받아올려고 하면 클릭이벤트가 발생하지 않는다. 예를들어
+```pug
+ul#jsCommentList  
+    each comment in video.comments.reverse()
+        li.video__comment(data-id=comment._id) 
+            i.fas.fa-comment 
+            span #{comment.text}
+            span#cancel ❌
+```
+이 경우, #cancel이나 .video__comment를 getElementById나 querySelector로 설정해줘도 클릭 값을 받앙로 수 없다는 것이다.       
+이 경우에는 ul에 id나 class를 지정해줘야지 클릭 값을 받아올 수 있다.
+
+## recap) webpack에서 js 파일 추가할 때 필요 요소
+---
+1. client/js/파일.js 추가
+2. webpack의 module > entry에 추가
+3. pug에 script(src="") 추가
+
+## fetch api 보내기
+---
+server.js
+```javascript
+app.use("/api", apiRouter);
+```
+<br/>
+
+apiRouter.js
+```javascript
+apiRouter.delete("/comments/:id([0-9a-f]{24})", deletComment);
+```
+<br/>
+
+deleteComment.js
+```javascript
+const handelCancel = async (event) => {
+    ...
+    const response = await fetch(`/api/comments/${commentId}`, {
+        // 위에서 만들어준 경오오 가야힘
+        method: "DELETE",
+    })
+    ...
+}
+```
+
+## Comment back-end에서 삭제하기
+---
+```javascript
+export const deletComment = async (req, res) => {
+    const {
+        session: { user }, // 현재 로그인한 유저정보
+        params: { id }, // comment id
+    } = req;
+
+    const san = await Comment.findById(id).populate("owner");
+    // comment를 작성한 이용자의 id를 받아옴
+    if (String(san.owner._id) === String(user._id)) {
+        // 작성한 사람과 현재 로그인 사람이 같은지 확인
+        await Comment.remove({ _id: id });
+        // db에서 삭제
+    }
+    res.sendStatus(200);
+}
+```
+
+## Comment front-end에서 삭제하기
+---
+deleteComment.js        
+```javascript
+
+const handelCancel = async (event) => {
+    ...
+    const commentId = event.target.parentElement.dataset.id;
+
+    removeComment(commentId);
+    // removeComment로 id를 보냄
+    ...
+}
+
+const removeComment = (commentId) => {
+    const videoComments = document.querySelector(".video__comments ul");
+    // ul을 받아옴
+    const child = document.querySelector(`[data-id='${commentId}']`);
+    // 클릭한 data-id가 들어있는 li를 받아옴
+    videoComments.removeChild(child);
+    // ul로 부터 li를 삭제함
+}
+```
+
+## User가 삭제한 비디오 id 삭제
+---
+![그림 1-1](/assets/img/web/2021-08-02/1-1.png)    
+현재 비디오를 삭제해도 업한 목록이 계속 남아있음        
+videoController.js
+```javascript
+    const user = await User.findById(_id);
+    const num = user.videos.indexOf(id);
+    user.videos.splice(num, 1);
+    user.save();
+```
+![그림 1-1](/assets/img/web/2021-08-02/1-2.png)    
+비디오를 지우면 User의 video 리스트에서도 지워짐
+

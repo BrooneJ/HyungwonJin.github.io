@@ -186,7 +186,7 @@ block scripts
 
 <br/>
 
-첫번째 방법     
+첫번째 방법(pug에서)     
 watch.pug
 ```pug
 if loggedIn //- loggedIn을 써서 로그인 했을 경우만 js를 로드할 수 있게 한다.
@@ -195,6 +195,7 @@ if loggedIn //- loggedIn을 써서 로그인 했을 경우만 js를 로드할 �
 
 <br/>
 
+두번째 방법(js에서)
 commentSection.js
 ```javascript
 const videoContainer = document.getElementById("videoContainer");
