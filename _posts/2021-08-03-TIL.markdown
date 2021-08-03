@@ -1,0 +1,198 @@
+---
+layout: post
+title: "210803-TIL(React.js)"
+subtitle: "TIL-210803"
+categories: til
+tags: til
+comments: false
+---
+
+# React
+---
+- 사용하는 이유: 
+    1. 페이지 깜빡임이 없어서 사용자 경험이 좋다. (앱 같은 느낌)
+    2. 컴포넌트화(재사용 컴포넌트)
+    3. 데이터 - 화면 일치(ex. 좋아요 부분만 찾아서 데이터 업데이트)
+
+## ReactDOM
+---
+리액트로 컴포넌트를 만들려고 한 것을 실제로 화면에 랜더링
+```HTML
+<html>
+    <head>
+        <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script>
+            const e = React.createElement;
+            //태그를 만들어주는 함수
+
+            class LikeButton extends React.Component {
+                constructor(props) {
+                    super(props);
+                }
+
+                render() {
+                    return e('button', null, "Like"); //<button>Like</button>
+                }
+            }
+        </script>
+        <script>
+            ReactDOM.render(e(LikeButton), document.querySelector("#root"));
+            // <div id="root"></div>에 create된 Element인 e('button', null, "Like")를 갖다붙임
+            // 따라서 <div id="root"><button>Like</button></div>가 됨
+        </script>
+    </body>
+</html>
+```
+
+## 상태관리
+---
+상태는 바뀔 수 있는 부분임        
+예를 들어 Like(좋아요)를 클릭하면 Liked라고 바뀌는 것
+
+## render 부분 깔끔하게
+---
+```html
+<html>
+...
+<body>
+    <div id="root"></div>
+    <script>
+        ...
+            render() { // e()를 쓰지 않고 html태그 사용가능
+                return <button type="submit" onClick={() => { this.setState({ liked: true }) }}>Like</button>
+                // return e(
+                //     'button', {
+                //     onClick: () => { this.setState({ liked: true }) }, type: "submit"
+                // }, this.state.liked === true ? "Liked" : "Like",
+                // );
+                // //<button onclick ="() => { console">Like</button>
+            }
+        }
+    </script>
+    <script>
+        ReactDOM.render(<LikeButton />, document.querySelector("#root"));
+        // ReactDOM.render(e(LikeButton), document.querySelector("#root"));
+    </script>
+</body>
+
+</html>
+```
+
+## 반복이 편리함
+---
+```html
+<html>
+...
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        ...
+            render() {
+                // JSX: jacascript & XML
+                return <button type="submit" onClick={() => { this.setState({ liked: true }) }}>
+                    {this.state.liked ? "Liked" : "Like"}
+                </button>
+            }
+        }
+    </script>
+    <script type="text/babel">
+        ReactDOM.render(<div><LikeButton /><LikeButton /><LikeButton /><LikeButton /></div>, document.querySelector("#root"));
+        // <LikeButton /> 이라는 컴포넌트를 셋팅해놓고 반복해서 호출하는 것만으로도 사용가능
+    </script>
+</body>
+
+</html>
+```
+
+## state 알아보기
+---
+```html
+<html>
+...
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        class GuGuDan extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = { // 변하는 부분만 state에 등록
+                    first: Math.ceil(Math.random() * 9),
+                    second: Math.ceil(Math.random() * 9),
+                    value: "",
+                    result: "",
+                }
+            }
+
+            onSubmit = (e) => {
+                e.preventDefault();
+                if(parseInt(this.state.value) === this.state.first * this.state.second){
+                    this.setState({
+                        result: "정답",
+                        first: Math.ceil(Math.random() * 9),
+                        second: Math.ceil(Math.random() * 9),
+                        value: "",
+                    });
+                } else {
+                    this.setState({
+                        result: "땡",
+                        value: "",
+                    });
+                }
+            }
+
+            onChange = (e) => this.setState({ value: e.target.value })
+
+            render() {
+                return (
+                    <div>
+                        <div>{this.state.first} 곱하기 {this.state.second}는?</div>
+                        <form onSubmit={this.onSubmit}>
+                            <input type="number" value={this.state.value} onChange={this.onChange} /> <!-- onChange를 쓰지 않으면 숫자를 입력할 수 없음, 변하는 상태이기 때문에-->
+                            <button>입력!</button>
+                        </form>
+                        <div>{this.state.result}</div>
+                    </div>
+                );
+            }
+        }
+    </script>
+    <script type="text/babel">
+        ReactDOM.render(<GuGuDan />, document.querySelector("#root"));
+    </script>
+</body>
+
+</html>
+```
+
+## 과거의 state를 나타내는 방법
+---
+```html
+<script>
+onSubmit = (e) => {
+    e.preventDefault();
+    if (parseInt(this.state.value) === this.state.first * this.state.second) {
+        // this.setState({
+        //     result: this.state.value + " 정답",
+        //     first: Math.ceil(Math.random() * 9),
+        //     second: Math.ceil(Math.random() * 9),
+        //     value: "",
+        // });
+        this.setState((prevState) => { //이전 state를 prevState에 담음
+            return {
+                result: prevState.value + " 정답",
+                first: Math.ceil(Math.random() * 9),
+                second: Math.ceil(Math.random() * 9),
+                value: "",
+            }
+        });
+    } else {
+        ...
+    }
+}
+</script>
+```
+
