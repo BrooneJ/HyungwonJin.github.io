@@ -1,0 +1,122 @@
+---
+layout: post
+title: "210804-TIL(React.js, Figma)"
+subtitle: "TIL-210804"
+categories: til
+tags: til
+comments: false
+---
+
+## react hooks와 class 비교
+---
+```html
+<html>
+...
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const GuGuDan = () => {
+            const [first, setFirst] = React.useState(Math.ceil(Math.random() * 9));
+            const [second, setSecond] = React.useState(Math.ceil(Math.random() * 9));
+            const [value, setValue] = React.useState("");
+            const [result, setResult] = React.useState("");
+            const inputRef = React.useRef(null);
+
+            // class GuGuDan extends React.Component {
+            // constructor(props) {
+            //     super(props);
+            //     this.state = {
+            //         first: Math.ceil(Math.random() * 9),
+            //         second: Math.ceil(Math.random() * 9),
+            //         value: "",
+            //         result: "",
+            //     }
+            // }
+
+            const onChangeInput = (e) => {
+                setValue(e.target.value);
+            }
+
+            // onChange = (e) => this.setState({ value: e.target.value })
+
+            const onSubmit = (e) => {
+                e.preventDefault();
+                if (parseInt(value) === first * second) {
+                    setResult("정답: " + value)
+                    setFirst(Math.ceil(Math.random() * 9));
+                    setSecond(Math.ceil(Math.random() * 9));
+                    setValue("");
+                    inputRef.current.focus();
+
+                    // this.setState((prevState) => {
+                    //     return {
+                    //         result: prevState.value + " 정답",
+                    //         first: Math.ceil(Math.random() * 9),
+                    //         second: Math.ceil(Math.random() * 9),
+                    //         value: "",
+                    //     }
+                    // });
+                    // this.input.focus();
+                } else {
+                    setResult("땡");
+                    setValue("");
+                    inputRef.current.focus();
+
+                    // this.setState({
+                    //     result: "땡",
+                    //     value: "",
+                    // });
+                    // this.input.focus();
+                }
+            }
+
+            return (
+                <React.Fragment>
+                    <div>{first} 곱하기 {second}는?</div>
+                    <form onSubmit={}>
+                        <input ref={inputRef} onChange={onChangeInput} value={value} />
+                        <button>입력!</button>
+                    </form>
+                    <div id="result">{result}</div>
+                </React.Fragment>
+            )
+
+            // render() {
+            //     return (
+            //         <div>
+            //             <div>{this.state.first} 곱하기 {this.state.second}는?</div>
+            //             <form onSubmit={this.onSubmit}>
+            //                 <input ref={(c) => { this.input = c; }} type="number" value={this.state.value} onChange={this.onChange} />
+            //                 <button>입력!</button>
+            //             </form>
+            //             <div>{this.state.result}</div>
+            //         </div>
+            //     );
+            // }
+        }
+    </script>
+    <script type="text/babel">
+        ReactDOM.render(<GuGuDan />, document.querySelector("#root"));
+    </script>
+</body>
+
+</html>
+```
+
+## react에서 class와 for
+---
+class는 객체의 class와 혼동의 우려가 있어 class 대신 className을 쓴다.      
+마찬가지로 for도 반복문의 for과 혼동의 우려가 있어 htmlfor을 쓴다.
+
+
+# Figma
+---
+피그마를 쓰는 이유
+- 웹 기반의 클라우드 소프트웨어
+    - 웹기반이기 때문에 os에 관계 없이 호환이 가능
+    - URL로 간단히 파일 공유가 가능
+    - 파일이 자동으로 동기화 됨
+- 실시간 협업
+- 버전 히스토리
+- 백터 네트워크
+    - 이어진 선들은 하나의 요소로 인식되기 때문에 색상, 선 두께 등 스타일이 동일하게 적용된다.
