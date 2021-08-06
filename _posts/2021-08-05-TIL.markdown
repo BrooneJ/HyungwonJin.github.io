@@ -26,7 +26,7 @@ const path = require("path"); // 현재 경로를 불러옴
 module.exports = {
     name: 'wordrelay-setting', // 그냥 이름
     mode: 'development', // 실시간 서비스로 출시할 때는 production으로 바꿔야함
-    devtool: 'eval', // 빠른 모드라는 뜻
+    devtool: 'eval', // 빠른 모드라는 뜻, product는 'hidden-source-map
     resolve: {
         extensions: ['.js', '.jsx'], 
         // entry의 app에 있는 파일 제목을 폴더에서 찾아서 확장자를 붙임

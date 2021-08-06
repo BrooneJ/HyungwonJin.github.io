@@ -1,0 +1,216 @@
+---
+layout: post
+title: "210806-TIL(React.js, Figma)"
+subtitle: "TIL-210806"
+categories: til
+tags: til
+comments: false
+---
+
+## webpack에서 지원하는 브라우저 설정
+---
+<https://github.com/browserslist/browserslist>      
+```javascript
+module: {
+    rules:[{
+        test: /\.jsx?$/,
+        loader: 'babel-loader',
+        options: {
+            presets: [
+                ['@babel/preset-env', {
+                    targets: {
+                        browsers: ['> 5% in KR', 'last 2 chrome versions'],
+                    },
+                    debug: true,
+                }],
+                '@babel/preset-react',
+            ],
+            plugins: [],
+        }
+    }]
+}
+```
+![그림 1-1](/assets/img/web/2021-08-06/1-1.png)  
+위 그림과 같이 점유율 5% 이상인 브라우저를 찾아서 plugins를 적용해줌
+
+## wrbpack refresh
+---
+terminal
+```
+npm i react-refresh @pmmmwh/react-refresh-webpack-plugin -D
+npm i -D webpack-dev-server
+```
+
+package.json
+```javascript
+"dev": "webpack serve --env development"
+```
+
+webpack.config.js
+```javascript
+const path = require('path');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+
+module.exports = {
+    name: 'word-relay-dev',
+    mode: 'development',
+    devtool: 'inline-source-map',
+    resolve: {
+        extensions: ['.js', '.jsx'],
+    },
+    entry: {
+        app: './client',
+    },
+    module: {
+        rules: [{
+            test: /\.jsx?$/,
+            loader: 'babel-loader',
+            options: {
+                presets: [
+                    ['@babel/preset-env', {
+                        targets: { browsers: ['last 2 chrome versions'] },
+                        debug: true,
+                    }],
+                    '@babel/preset-react',
+                ],
+                plugins: ['react-refresh/babel'],
+            },
+            exclude: path.join(__dirname, 'node_modules'),
+        }],
+    },
+    plugins: [
+        new ReactRefreshWebpackPlugin(),
+    ],
+    output: {
+        path: path.join(__dirname, 'dist'),
+        filename: '[name].js',
+        publicPath: '/dist',
+    },
+    devServer: {
+        publicPath: '/dist',
+        hot: true
+    }
+};
+```
+
+## class를 hook으로 바꾸는 방법
+---
+WordRelay.jsx
+```javascript
+const React = require('react');
+const { useState, useRef } = React;
+// const { Component } = React;
+
+const WordRelay = () => {
+    // class WordRelay extends Component {
+    const [word, setWord] = useState("사과");
+    const [value, setValue] = useState("");
+    const [result, setResult] = useState("");
+    const inputRef = useRef(null);
+    // state = {
+    //     word: "사과",
+    //     value: "",
+    //     result: '',
+    // };
+
+    const onSubmitForm = (e) => {
+        e.preventDefault();
+        if (word[word.length - 1] === value[0]) {
+            setResult('딩동댕');
+            setWord(value);
+            setValue("");
+            inputRef.current.focus();
+            // this.setState({
+            //     result: '딩동댕',
+            //     word: this.state.value,
+            //     value: "",
+            // })
+            // this.input.focus();
+        } else {
+            setResult("땡!");
+            setValue("");
+            inputRef.current.focus();
+            // this.setState({
+            //     result: '땡',
+            //     value: '',
+            // })
+            // this.input.focus();
+        }
+    }
+
+    const onChangeInput = (e) => {
+        setValue(e.target.value);
+        // this.setState({ value: e.target.value })
+    }
+
+    // input;
+
+    // onRefInput = (c) => {
+    //     this.input = c;
+    // }
+
+    // render() {
+    return (
+        <>
+            <div>{word}</div>
+            <form onSubmit={onSubmitForm}>
+                <input ref={inputRef} value={value} onChange={onChangeInput} />
+                <button>입력!</button>
+            </form>
+            <div>{result}</div>
+        </>
+    )
+    // }
+}
+
+module.exports = WordRelay;
+```
+
+
+## Figma
+---
+- 프레임 만들기
+    - Frmae툴 클릭하고 원하는 크기만큼 드래그     
+    - Fill패널에서 색상 지정가능      
+    - Frame 패널에서 라운드 입력란에서 모서리 둥글기 조정가능
+- 그림자 효과 넣기
+    - Effect패널의 + 클릭 -> Drop shadow 선택한 뒤 햇빛모양 클릭해서 Blur랑 색상, 투명도 조정
+
+## 거리 측정 기능
+---
+masOS: option       
+window: Alt     
+키를 누르고 거리를 재고 싶은 컴포넌트에 커서를 가져다 대면 거리가 나옴      
+![그림 1-1](/assets/img/web/2021-08-06/1-2.png)         
+
+완성작      
+![그림 1-1](/assets/img/web/2021-08-06/1-3.png)  
+
+## 시간대 나타내기
+---
+```javascript
+const today = new Date(); 
+
+today.toString(); 
+// Mon Apr 19 2021 23:02:18 GMT+0900 (Korean Standard Time) 
+
+today.toDateString(); 
+// Mon Apr 19 2021 
+
+today.toLocaleString(); 
+// 4/19/2021, 11:02:18 PM 
+
+today.toLocaleDateString(); 
+// 4/19/2021 
+
+today.toGMTString(); 
+// Mon, 19 Apr 2021 14:02:18 GMT 
+
+today.toUTCString(); 
+// Mon, 19 Apr 2021 14:02:18 GMT 
+
+today.toISOString(); 
+// 2021-04-19T14:02:18.809Z
+
+출처: https://7942yongdae.tistory.com/41 [프로그래머 YD]
+```
