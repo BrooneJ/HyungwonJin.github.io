@@ -1,0 +1,337 @@
+---
+layout: post
+title: "210808-TIL(React.js)"
+subtitle: "TIL-210808"
+categories: til
+tags: til
+comments: false
+---
+
+# Hook 정리
+---
+
+## useState
+---
+const [값, 변경 기능] = useState(초기값);
+```javascript
+import React, { useState } from "react";
+import ReactDOM from "react-dom";
+
+export default function App() {
+  const [item, setItem] = useState(1);
+  // const [값, 변경 기능] = useState(초기값);
+  const incrementItem = () => setItem(item + 1);
+  // setItem을 써서 1 올림
+  const decrementItem = () => setItem(item - 1);
+  // setItem을 써서 1 내림
+
+  return (
+    <div className="App">
+      <h1>Hello {item}</h1>
+      <h2>Start editing to see some magic happen!</h2>
+      <button onClick={incrementItem}>Increment</button>
+      <button onClick={decrementItem}>Decrement</button>
+    </div>
+  );
+}
+```
+
+## useInput
+---
+```javascript
+import React, { useState } from "react";
+import ReactDOM from "react-dom";
+
+const useInput = (initialValue) => { 
+  const [value, setValue] = useState(initialValue);
+  // 초깃값을 설정하고 쓸 수 있음
+  const onChange = (event) => {
+    console.log(event.target);
+  };
+  return { value, onChange };
+};
+
+export default function App() {
+  const name = useInput("Mr.");
+  return (
+    <div className="App">
+      <h1>Hello</h1>
+      <input placeholder="Name" {...name} />
+      // {...name} => value={name.value} onChange={name.onChange}
+      // 무려 다른 finction에서 이벤트를 처리할 수 있다
+    </div>
+  );
+}
+```
+
+## useInput 검증 단계 넣기
+---
+```javascript
+import React, { useState } from "react";
+import ReactDOM from "react-dom";
+
+const useInput = (initialValue, validator) => { // validator
+  const [value, setValue] = useState(initialValue);
+  const onChange = (event) => {
+    const {
+      target: { value }
+    } = event;
+    // 키보드의 변화를 value로 불러옴
+
+    let willUpdate = true; 
+    // true일 때만 변하도록
+    if (typeof validator === "function") {
+        //validator가 function일 경우
+      willUpdate = validator(value);
+      // validator에 넣은 value값을 willUpdate에 넣음
+      // 만약 const maxLen = (value) => value.length <= 10를 넣으면
+      // value.length가 10보다 큰 경우는 false를 반환
+      // 작연 경우는 true를 반환한다.
+    }
+    if (willUpdate) {
+      setValue(value);
+      // willUpdate가 true인 경우 setValue를 통해 value 변경
+    }
+  };
+  return { value, onChange };
+};
+
+export default function App() {
+  const maxLen = (value) => value.length <= 10;
+  const name = useInput("Mr.", maxLen);
+  return (
+    <div className="App">
+      <h1>Hello</h1>
+      <input placeholder="Name" {...name} />
+    </div>
+  );
+}
+```
+
+## useTabs
+---
+```javascript
+import React, { useState } from "react";
+
+const content = [
+  {
+    tab: "Section 1",
+    content: "I'm the content of the Section 1"
+  },
+  {
+    tab: "Section 2",
+    content: "I'm the content of the Section 2"
+  }
+];
+
+const useTabs = (initialTab, allTabs) => {
+  if (!allTabs || !Array.isArray(allTabs)) {
+      // allTabs가 없고, 내용이 비어있으면
+    return; // 아무것도 하지 않음
+  }
+
+  const [currentIndex, setCurrentIndex] = useState(initialTab);
+  // 초기 값은 0이고, setCurrentIndex로 상태변화
+  return {
+    currentItem: allTabs[currentIndex],
+    // content[0]
+    changeItem: setCurrentIndex
+    // 0 or 1
+  };
+};
+
+export default function App() {
+  const { currentItem, changeItem } = useTabs(0, content);
+  return (
+    <div className="App">
+      {content.map((section, index) => ( // content의 갯수만큼 button을 만듦
+        <button onClick={() => changeItem(index)}>{section.tab}</button>
+      ))}
+      <div>{currentItem.content}</div>
+    </div>
+  );
+}
+```
+
+## react에서 조건문
+---
+false, undefined, null은 jsx에서 태그없음을 의미한다.
+
+## 반응속도 게임 js랑 react 비교
+---
+js
+```javascript
+const $screen = document.querySelector("#screen");
+    const $result = document.querySelector("#result");
+
+    let startTime;
+    let endTime;
+    let records = [];
+    let timeoutId;
+
+    $screen.addEventListener("click", (event) => {
+        if(event.target.classList.contains('waiting')){
+            $screen.classList.remove("waiting");
+            $screen.classList.add("ready");
+            $screen.textContent = "초록색이 되면 클릭하세요.";
+            timeoutId = setTimeout(function() {
+                startTime = new Date();
+                $screen.classList.remove("ready");
+                $screen.classList.add("now");
+                $screen.textContent = "클릭하세요.";
+            }, Math.floor(Math.random() * 1000) + 2000);
+            // 0 + 2000 <= x * 1000 + 2000 < 1 * 1000 + 2000
+            // 2000 <= x < 3000
+        } else if (event.target.classList.contains('ready')){
+            clearTimeout(timeoutId);
+            $screen.classList.remove('ready');
+            $screen.classList.add("waiting");
+            $screen.textContent = "너무 성급하시군요."
+        } else if (event.target.classList.contains('now')){
+            endTime = new Date();
+            const current = endTime - startTime;
+            records.push(current);
+            const average = records.reduce((a, c) => a + c) / records.length;
+            $result.textContent = `현재: ${current}ms, 평균: ${average}ms`;
+
+            const topFive = records.sort((a, b) => a - b).slice(0, 5);
+            topFive.forEach((top, index) => {
+                $result.append(
+                    document.createElement('br'),
+                    `${index + 1}위: ${top}ms`
+                );
+            });
+
+            startTime = null;
+            endTime = null;
+            $screen.classList.remove("now");
+            $screen.classList.add("waiting");
+            $screen.textContent = "클릭해서 시작하세요.";
+        }
+    })
+```
+
+react
+```jsx
+class ResponseCheck extends Component {
+    state = {
+        state: 'waiting',
+        message: '클릭해서 시작하세요.',
+        result: [],
+    }
+
+    timeout;
+    startTime;
+    endTime;
+
+    onClickScreen = () => {
+        const { state, message, result } = this.state;
+        if (state === 'waiting') {
+            this.setState({
+                state: 'ready',
+                message: '초록색이 되면 클릭하세요.',
+            });
+            this.timeout = setTimeout(() => {
+                this.setState({
+                    state: 'now',
+                    message: '지금 클릭',
+                })
+                this.startTime = new Date();
+            }, Math.floor(Math.random() * 1000) + 2000);
+        } else if (state === 'ready') {
+            clearTimeout(this.timeout);
+            this.setState({
+                state: 'waiting',
+                message: '너무 일찍 눌렀습니다.'
+            })
+        } else if (state === 'now') {
+            this.endTime = new Date();
+            this.setState((prevState) => {
+                return {
+                    state: 'waiting',
+                    message: '클릭해서 시작하세요.',
+                    result: [...prevState.result, this.endTime - this.startTime],
+                }
+            })
+        }
+    }
+
+    onReset = () => [
+        this.setState({
+            result: [],
+        })
+    ]
+
+
+    render() {
+        const { state, message, result } = this.state;
+        return (
+            <>
+                <div
+                    id="screen"
+                    className={state}
+                    onClick={this.onClickScreen}
+                >
+                    {message}
+                </div>
+                {result.length === 0 ? null :
+                    <>
+                        <div>평균 시간: {result.reduce((a, c) => a + c) / result.length}ms</div>
+                        <button onClick={this.onReset}>리셋</button>
+                    </>
+                }
+            </>
+        )
+    }
+
+}
+```
+
+## cookies & sessions
+---
+세션은 백엔드와 브라우저 간에 어떤 활동을 했는 지 기억하는 것   
+```javascript
+app.use(session({
+  secret: "fgsdrgsfhdf", // 아무도 모르는 문자열
+  resave: true,
+  savaUninitialized: true,
+}))
+```
+이렇게 하면 누가 사이트에 들어왔는 지 알 수 있음(로그인 하지 않아도)    
+서버에서는 session 미들웨어가 브라우저한테 텍스트를 보냄
+
+<br/>
+
+이를 확인해보는 방법    
+```javascript
+app.use((req, res, next) => {
+  req.sessionStore.all((error, sessions) => {
+    console.log(sessions);
+    next()
+  })
+})
+```
+를 미들웨어로 입력해보면    
+![그림 1-1](/assets/img/web/2021-08-08/1-2.png)        
+![그림 1-1](/assets/img/web/2021-08-08/1-3.png)        
+![그림 1-1](/assets/img/web/2021-08-08/1-1.png)        
+2가지 유저(위 그림에서는 서로 다른 두 브라우저)가 접속했을 때 백엔드는 각 브라우저에서 만든 session ID를 받음   
+이러한 방법으로 서로 다른 두 session을 기억하고 있음    
+
+이는 메모리에 저장되어 있기 때문에 서버를 재시작하면 사라짐   
+
+서버가 브라우저한테 session ID를 주고 있다. 그리고 브라우저가 요청을 보낼 때마다 쿠키에서 session ID를 가져와 보내주는 것. 그러면 서버가 그 session ID를 읽고 우리가 누구인지 알 수 있다.   
+백엔드가 브라우저한테 id를 주고 있다.   
+
+<br/>
+
+userController.js
+```javascript
+req.session.loggedIn = true;
+// 현재 로그인 상태가 true라는 뜻
+req.session.user = user; 
+//session json에 로그인한 user 정보를 넣음
+```
+![그림 1-1](/assets/img/web/2021-08-08/1-4.png)         
+이과 같이 로그인하면 session에 기록된다.
+ 
