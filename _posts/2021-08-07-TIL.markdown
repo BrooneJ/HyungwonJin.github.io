@@ -124,7 +124,7 @@ const arr2 = [...arr, 1] //과 같이 얕은 복사 후에 새로운 값을 넣�
 arr === arr2 //는 false가 나오므로 react가 새로 rendering을 함
 
 // 따라서 상태변화가 있을 때는
-this.setState((prevState) => { // 옛날 데이터로 현재 데이터를 바꿀때는 precState를 써야함
+this.setState((prevState) => { // 옛날 데이터로 현재 데이터를 바꿀때는 prevState를 써야함
         return {
             tries: [...prevState.tries, { try: value, result: `${strike} 스트라이크, ${ball} 볼 입니다.` }],
             value: '',
@@ -469,7 +469,8 @@ const Try = memo(({ tryInfo }) => {
 - render() 안에는 this.setState()가 들어가면 안된다.  -> this.setState를 하면 render가 실행되고 render()가 실행되면 다시 this.setState가 실행되므로 무한 loop를 하게 됨       
 
 - 자식은 props를 바꾸지 않는다.
-꼭 바꿔야하는 경우에는 state를 만들어서 바꾼다.
+꼭 바꿔야하는 경우에는 state를 만들어서 바꾼다.     
+
 ```javascript
 import React, {memo, useState} from 'react';
 
