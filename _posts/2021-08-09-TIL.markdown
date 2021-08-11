@@ -80,8 +80,9 @@ client.jsx에서 렌더링 되는 순간 RSP.jsx의 constructor부분이랑 meth
 
 화면이 보인 후 props나 setState를 바꾸거나 하면 리렌더링이 있어난다. -> 이 때 shouldComponentUpdate의 return이 true가 되는 경우 리렌더링이 일어남 -> 리렌더링 후에는 componentDidUpdate -> 만약 부모가 자식 component를 없앨 때에는 componentWillUnmount -> 그 후에는 화면에서 사라짐
 
-- 사용 예시     
-```javascript
+ex) 사용 예시     
+
+```javascript       
 interval;
 componentDidMount() { // 여기서 인터벌 설정
     this.interval = setInterval(() => {
