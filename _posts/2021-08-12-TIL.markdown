@@ -1,0 +1,55 @@
+---
+layout: post
+title: "210812-TIL(리액트를 다루는 기술)"
+subtitle: "TIL-210812"
+categories: til
+tags: til
+comments: false
+---
+
+## ref 란?
+---
+HTML에서 id를 사용해서 DOM에 이름을 다는 것 처럼 react에서 DOM에 이름을 다는 방법을 ref 라고 함     
+
+## 어떨 때 사용해야 할까?
+---
+DOM을 직접 건드려야할때
+
+# 컴포넌트의 라이프사이클
+---
+컴포넌트에는 라이프 사이클이 존재한다.      
+Will이 붙은 메서드는 작동하기 전에 실행       
+Did가 붙은 메서드는 작동한 후에 실행되는 메서드이다.
+
+## 라이프 사이클의 3가지 단계
+---
+1. 마운트       
+DOM이 생성되고 브라우저 상에 나타나는 것을 마운트 라고 한다.        
+컴포넌트 만들기 => constructor => getDerivedStateFromProps => render => componentDidMount       
+
+2. 업데이트(업데이트를 해야하는 경우 4가지)     
+    1. props가 바뀔 때
+    2. state가 바뀔 때
+    3. 부모 컴포넌트가 리렌더링 될 때
+    4. this.forceUpdate로 강제로 렌더링을 트리거할 때
+
+3. 언마운트     
+컴포넌트를 DOM에서 제거하는 것      
+
+## componentDidMount
+---
+첫 렌더링을 마친 후에 실행합니다. 여기서 자바스크립트 라이브러리나 프레임워크의 함수를 호출, 이벤트 등록, setTimeout, setInterval, 네트워크 요청 같은 비동기 작업을 처리한다.       
+
+## shouldComponentUpdate
+---
+props 또는 state를 변경했을 때, 리렌더링을 시작할지 여부를 지정하는 메서드. true 또는 false 값을 반환해서 리렌더링 할 것인지 아닌지 나타내야함.(default는 true)     
+
+## componentDidUpdate
+---
+리렌더링을 완료한 후에 실행. 업데이트가 끝난 후이므로 DOM 관련 처리를 해도 무방.        
+prevprops 또는 prevState를 사용하여 컴포넌트가 이전에 가졌던 데이터에 접근 가능.        
+
+## componentWillUnmount
+---
+컴포넌트를 DOM에서 제거할 때 사용. componentDidMount에서 등록한 이벤트, 타이머, DOM이 있다면 여기서 제거해야함      
+
