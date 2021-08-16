@@ -1,0 +1,314 @@
+---
+layout: post
+title: "210816-TIL(Javascript, React, Next)"
+subtitle: "TIL-210816"
+categories: til
+tags: til
+comments: false
+---
+
+# foreach, map, filter, reduce
+---
+출처: code Scalper님 강의       
+<https://www.youtube.com/watch?v=vqdzVZxoRtM>       
+
+<br/>
+
+주어진 array
+```javascript
+const animals= [
+    {name: 'lion', size: 'big', isAggressive: true, weight: 200 },
+    {name: 'monkey', size: 'medium', isAggressive: true, weight: 30 },
+    {name: 'cat', size: 'small', isAggressive: false, weight: 10 },
+    {name: 'rat', size: 'small', isAggressive: false, weight: 2 },
+];
+
+// 기본 반복문
+for (let i = 0; i < animals.length; i++){
+    console.log(animals[i].name)
+}
+
+for (let animal of animals){
+    console.log(animal)
+}
+```
+
+<br/>
+
+## forEach
+---
+부가기능은 따로 없는 반복문
+
+```javascript
+animals.forEach((animal, index) => {
+    console.log(animal.name, i)
+})
+// lion, 0
+// monkey, 1
+// cat, 2
+// rat, 3
+```
+
+## map
+---
+배열을 다른 형태의 배열로 재생산 할 때 사용하는 반복문      
+```javascript
+const animalsName = animals.map((animal) => {
+    return animal.name;
+})
+
+console.log(animalsName);
+// ['lion', 'monkey', 'cat', 'rat']
+```
+
+## filter
+---
+특정 조건을 가진 item들만 뽑아내는 반복문       
+```javascript
+const smallAnimals = animals.filter((item) => {
+    return item.size === 'small';
+})
+
+console.log(smallAnimals)
+// [{name: 'cat', size: 'small', isAggressive: false, weight: 10 },
+//  {name: 'rat', size: 'small', isAggressive: false, weight: 2 },]
+```
+
+## reduce
+---
+가장 기본적인 형태는 배열 안의 값들의 합을 구할 때       
+```javascript
+const numbers = [1,2,3,4,5];
+
+const total = numbers.reduce((acc, cur) => {
+    console.log(acc, cur);
+    return acc+cur;
+})
+// 1 2
+// 3 3
+// 6 4
+// 10 5
+
+console.log(total)
+// 15
+
+// 초기값이 없는 경우
+const totalWeight = animals.reduce((acc, cur) => {
+    return acc + cur.weight;
+}, 0) // 초기값을 0으로 지정해준다.
+
+console.log(totalWeight);
+// 242
+```
+
+# React, Next
+---
+## React, Next 설치
+---
+```
+npm i Next@version
+npm i react react-dom
+```
+
+## Next에서 주의할 점 1
+---
+pages라는 폴더 아래에 .js 파일을 작성한다. 그래야지 브라우저와 1대1 매칭이 되어 localhost:3000/profile 과 같이 화면이 뜬다.     
+
+
+## compoonent 만들기
+---
+components파일을 만듦 -> AppLayout 만듦 -> npm i prop-types 설치     
+<br/>
+
+AppLayout.js
+```javascript
+import PropTypes from 'prop-types'
+
+const AppLayout = ({ children }) => {
+    return (
+        <div>
+            <div>공통메뉴</div>
+            {children}
+            // 다른 페이지에서 <AppLayout></AppLayout> 로 감싸진 children을 받아서 표기함
+        </div>
+    )
+}
+
+// propTypes는 타입스크립트를 쓰면 안해도 된다.
+// 하지만 현재는 타입검사를 위해 필요함
+AppLayout.propTypes = {
+    children: PropTypes.node.isRequired,
+}
+
+export default AppLayout;
+```
+
+<br/>
+
+profile.js
+```javascript
+import AppLayout from "../components/AppLayout";
+
+const Profile = () => {
+    return (
+        <AppLayout>
+            내 프로필
+        </AppLayout>
+    )
+}
+
+export default Profile;
+```
+
+## Router 설정 없이 경로 설정
+---
+```javascript
+...
+-> import Link from 'next/link';
+
+const AppLayout = ({ children }) => {
+    return (
+        <div>
+            <div>
+                // next.js의 Link를 통해서 별도의 Router를 만들지 않고 경로 설정가능
+                <Link href="/"><a>Home</a></Link>
+                <Link href="/profile"><a>Profile</a></Link>
+                <Link href="/signup"><a>Signup</a></Link>
+            </div>
+            {children}
+        </div>
+    )
+}
+...
+```
+
+## eslint 설치하기
+---
+```
+npm i eslint -D
+npm i eslint-plugin-import -D
+npm i eslint-plugin-react -D
+npm i eslint-plugin-react-hooks -D
+```
+
+## git repository 지우다가 에러가 났을 때
+---
+![그림 1-1](/assets/img/web/2021-08-16/1-1.png)        
+```
+node:internal/bootstrap/switches/does_own_process_state:126
+    cachedCwd = rawMethods.cwd();
+                           ^
+
+Error: EPERM: operation not permitted, uv_cwd
+    at process.wrappedCwd (node:internal/bootstrap/switches/does_own_process_state:126:28)
+    at process.cwd (/opt/homebrew/lib/node_modules/npm/node_modules/graceful-fs/polyfills.js:10:19)
+    at new Config (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/config/lib/index.js:92:19)
+    at new <anonymous> (/opt/homebrew/lib/node_modules/npm/lib/npm.js:60:19)
+    at Object.<anonymous> (/opt/homebrew/lib/node_modules/npm/lib/npm.js:49:30)
+    at Module._compile (node:internal/modules/cjs/loader:1095:14)
+    at Object.Module._extensions..js (node:internal/modules/cjs/loader:1124:10)
+    at Module.load (node:internal/modules/cjs/loader:975:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:816:12)
+    at Module.require (node:internal/modules/cjs/loader:999:19) {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'uv_cwd'
+}
+```
+위와 같은 에리가 github Desk에서 repository를 지우다가 발생했다.        
+휴지통에서 파일을 복원했지만 위와 같은 에러가 발생하며 실행이 되지 않았다.      
+
+구글에서 검색을 해본 결과       
+<https://github.com/foreversd/forever/issues/200>
+```
+sudo npm cache clean -f
+sudo npm install -g n
+```
+위의 코드를 차례로 입력해주면 일단 실행이 되긴한다.(저장해뒀던 .eslintrc 파일이 없어져서 다른 파일도 없어진 것은 아닐까라는 불안함이 있음)
+
+## antd와 styled-components 설치
+---
+```
+npm i antd styled-components @ant-design/icons
+```
+
+## _app.js
+---
+공통되는 것을 한번에 import하기 위한 방법
+```javascript
+import PropTypes from 'prop-types';
+import Head from 'next/head';
+import 'antd/dist/antd.css'; 
+// _app.js에서 한번 import하면 다른 js 파일에서도 사용가능
+
+const App = ({ Component }) => { // 다른 js파일의 return이 Component로 들어옴
+    return (
+        <>
+            <Head> // 만약 다른 js파일에 Head가 있다면 그 Head로 덮어씌워짐
+                <meta charSet="utf-8" />
+                <title>Twitter</title>
+            </Head>
+            <Component />
+        </>
+    )
+}
+
+App.propTypes = {
+    Component: PropTypes.elementType.isRequired,
+}
+
+export default App;
+```
+
+## 새창 띄우기 
+---
+```html
+<a href="address" target="_blank" rel="noreferrer noopener">Github</a>
+// target="_blank"가 새창에 띄우는 방법이고
+// 보안 이슈를 해결하기 위해 rel="noreferrer noopener"를 입력해준다.
+```
+
+## user json에서 작성 게시글 리스트가 보이지 않을 때
+---
+User model에서 다음과 같이 words를 설정하면 user가 작성한 게시글 목록이 다 설정될 줄 알았다.       
+
+<br/>
+
+User.js
+```javascript
+const userSchema = mongoose.Schema({
+    ...
+    words: [{ type: mongoose.Schema.Types.ObjectId, ref: "Word" }],
+})
+```
+하지만 다음 그림과 같이 words 배열이 빈 배열로 나타났다.
+![그림 1-1](/assets/img/web/2021-08-16/1-2.png)         
+
+그리고 찾아본 결과 게시글을 작성할 때 user의 words라는 배열에 작성된 게시글의 id를 직접 push 해주어야한다는 것을 알게되었다.        
+
+따라서 wordRouter.js의 postUpload로 가서 다음과 같은 코드를 작성했다.       
+```javascript
+export const postUpload = async (req, res) => {
+    const { language, title, pronun, mean, example, from } = req.body;
+    const { user: { _id } } = req.session;
+    try {
+        const newWord = await Word.create({
+            ...
+        })
+        const user = await User.findById(_id); 
+        // 현재 session에 로그인한 유저의 _id를 받아 정보를 찾는다.
+        user.words.push(newWord);
+        // 얻은 newWord id를 user.words에 삽입한다.
+        user.save();
+        // 저장
+        return res.redirect("/");
+    } ...
+}
+```
+이 때 populate()를 안해줬을 경우        
+![그림 1-1](/assets/img/web/2021-08-16/1-3.png)    
+words에서는 id만 알 수 있다.        
+
+하지만 populate()를 해줬을 경우는
+![그림 1-1](/assets/img/web/2021-08-16/1-4.png)   
+위의 그림과 같이 words의 정보를 User model로부터 얻을 수 있다. 
