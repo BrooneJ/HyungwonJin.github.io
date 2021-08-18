@@ -14,7 +14,7 @@ comments: false
 ## 문제 발견
 ---
 CLI 환경에서 **git push origin master**를 입력했지만 다음과 같은 오류가 발생했다.       
-![그림 1-1](/assets/img/web/2021-08-18/1-1.PNG)    
+![그림 1-1](/assets/img/web/2021-08-18/1-1.png)    
 <br/>
 
 내용은 21.08.13부로 password를 통한 로그인은 지원하지 않고 토큰을 통한 로그인을 지원한다는 것         
@@ -26,7 +26,7 @@ CLI 환경에서 **git push origin master**를 입력했지만 다음과 같은 
 
 ## Token 생성
 ---
-![그림 1-1](/assets/img/web/2021-08-18/1-2.PNG)     
+![그림 1-1](/assets/img/web/2021-08-18/1-2.png)     
 1. github에 들어가서 오른쪽 상단의 **Setting** 클릭
 2. 왼쪽 메뉴에서 **Developer setting** 클릭
 3. **Personal access token** 클릭
@@ -34,7 +34,7 @@ CLI 환경에서 **git push origin master**를 입력했지만 다음과 같은 
 5. 토큰을 copy한다.
 
 다시 터미널로 돌아와서 생성한 토큰을 사용하려했지만     
-![그림 1-1](/assets/img/web/2021-08-18/1-1.PNG)         
+![그림 1-1](/assets/img/web/2021-08-18/1-1.png)         
 똑같은 오류가 발생한다.     
 <br/>
 
@@ -45,7 +45,7 @@ CLI 환경에서 **git push origin master**를 입력했지만 다음과 같은 
 Spotlight 검색에서 **키체인 접근**을 입력 후 실행시킨다.        
 그리고 우측 상단에 **git**이라고 검색하면 git과 관련된 항목만 뜬다.
 
-![그림 1-1](/assets/img/web/2021-08-18/1-3.PNG)     
+![그림 1-1](/assets/img/web/2021-08-18/1-3.png)     
 그리고 오른쪽 클릭을 해서 삭제를 하면 되는 줄 알았는데 삭제가 되지 않는다...        
 
 그래서 검색을 해보니 조금 더 추가 과정이 필요한 것을 알게 되었다.       
@@ -62,7 +62,7 @@ protocol=https
 ## 해결
 ---
 터미널을 다시 켜고 **git push origin master**을 입력하면       
-![그림 1-1](/assets/img/web/2021-08-18/1-4.PNG)     
+![그림 1-1](/assets/img/web/2021-08-18/1-4.png)     
 username은 자신의 username을 입력하고       
 password에는 <span style="color:yellow">**계정의 password가 아니라 Developer setting에서 생성한 token을 복사 붙여넣기를 한다**<span>
 
