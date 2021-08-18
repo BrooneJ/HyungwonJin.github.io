@@ -122,6 +122,7 @@ components파일을 만듦 -> AppLayout 만듦 -> npm i prop-types 설치
 
 AppLayout.js
 ```javascript
+특정 component가 공통인 부분
 import PropTypes from 'prop-types'
 
 const AppLayout = ({ children }) => {
@@ -234,7 +235,9 @@ npm i antd styled-components @ant-design/icons
 
 ## _app.js
 ---
-공통되는 것을 한번에 import하기 위한 방법
+공통되는 것을 한번에 import하기 위한 방법       
+_app.js:모든 페이지에서 공통인 부분은 _app.js에 넣음        
+layout: 특정(일부) component가 공통인 부분
 ```javascript
 import PropTypes from 'prop-types';
 import Head from 'next/head';
@@ -248,7 +251,7 @@ const App = ({ Component }) => { // 다른 js파일의 return이 Component로 �
                 <meta charSet="utf-8" />
                 <title>Twitter</title>
             </Head>
-            <Component />
+            <Component /> // 여기에 다른 js 파일의 return 부분이 들어옴
         </>
     )
 }
@@ -258,6 +261,40 @@ App.propTypes = {
 }
 
 export default App;
+```
+
+## Head를 수정하고 싶은 경우
+---
+```javascript
+...
+import Head from 'next/head';
+...
+
+const App = ({ Component }) => { 
+    return (
+        <>  
+            // 일반 html과 같이 <head></head>를 사용하면 안되고
+            // import Head from 'next/head'를 불러온 뒤
+            // <Head></Head>를 사용해야한다.
+            <Head> // 만약 다른 js파일에 Head가 있다면 그 Head로 덮어씌워짐
+                <meta charSet="utf-8" />
+                <title>Twitter</title>
+            </Head>
+            ...
+        </>
+    )
+}
+...
+```
+
+## gutter
+---
+column사이에 간격을 주는 것
+```javascript
+<Row gutter={8}>
+    <Col xs={} md={}>
+    </Col>
+</Row>
 ```
 
 ## 새창 띄우기 

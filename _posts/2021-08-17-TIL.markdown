@@ -16,9 +16,25 @@ Next 고유의 동작원리
 CORS란?
 
 
-## 주의사항
+## useCallback 주의사항
 ---
-component에 props로 넘겨주는 함수는 useCallback을 쓰면 최적화가 된다.
+component에 props로 넘겨주는 함수는 useCallback을 쓰면 최적화가 된다.       
+```javascript
+import { useCallback } from 'react';
+
+const Function = () => {
+    ...
+    const onChangeId = useCallback(() => {
+        setId(e.target.value);
+    }, []);
+
+    return (
+        <div>
+            <Input name="user" onChange={onChangeId} />
+        </div>
+    )
+}
+```
 
 ## 컴포넌트 만드는 방법
 ---
@@ -126,6 +142,27 @@ const ButtonWrapper = styled.div`
             // <div style={{ marginTop: "10px" }}>
             //     <Button type="primary" htmlType="submit" loading={false}>로그인</Button>
             //     <Link href="/signup"><a><Button>회원가입</Button></a></Link>
+            // </div>
+        </Form>
+    )
+}
+
+export default LoginForm;
+```
+
+## styled-component를 쓰기 싫은 경우는?
+---
+useMemo를 사용해야한다.     
+```javascript
+import { useMemo } from 'react';
+...
+    const style = useMemo(() => ({marginTop: "10px"}),[]);
+
+    return (
+        <Form>
+            ...
+            // <div style={style}>
+            //     ...
             // </div>
         </Form>
     )

@@ -1,0 +1,102 @@
+---
+layout: post
+title: "210818-TIL(React, Next)"
+subtitle: "TIL-210818"
+categories: til
+tags: til
+comments: false
+---
+
+## Button & submit
+---
+```javascript
+const onSubmitForm = useCallback(() => {
+    // e.preventDefault(); 하면 안됨
+})
+
+return (
+    <FormWrapper onFinish={onSubmitForm}>
+        <div>
+            <label htmlFor="user-id">아이디</label>
+            <br />
+            <Input name="user-id" value={id} onChange={onChangeId} required />
+        </div>
+        <ButtonWrapper>
+            <Button type="primary" htmlType="submit" loading={false}>로그인</Button>
+            // htmlType="submit"을 붙여줘야 onFinish={onSubmitForm}이 실행된다.
+            ...
+        </ButtonWrapper>
+    </FormWrapper>
+)
+```
+
+# Redux
+---
+next에 redux를 간단하게 붙이는 라이브러리       
+next-redux-wrapper을 install한다.      
+<https://github.com/kirill-konshin/next-redux-wrapper>      
+
+```
+npm i next-redux-wrapper
+```
+<br/>
+
+store/configureStore.js
+```javascript
+import { createWrapper } from 'next-redux-wrapper';
+
+const wrapper = createWrapper(configureStore, {
+    debug: process.env.NODE_ENV === 'development',
+    // debug 부분이 true이면 자세한 설명이 나오기 때문에 개발할 때는 true로 두자
+});
+
+export default wrapper;
+```
+<br/>
+
+page/_app.js        
+```javascript
+import wrapper from '../store/configureStore';
+
+const App = ({ Component }) => {
+    ...
+}
+
+export default wrapper.withRedux(App);
+// high-order component로 감싸준다.
+```
+
+> 예전 버전 next-redux-wrapper과 차이점이 있다.    
+
+_app.js 
+```javascript
+const App = ({ Component }) => {
+    return (
+        <Provider store={store}>
+            <Head>
+                ...
+            </Head>
+            <Component />
+        </Provider>
+    )
+}
+```
+> 예전 버전에서는 컴포넌트를 Provider로 감싸주어야 했지만 최신버전에서는 next-redux-wrapper가 자동으로 감싸주므로 오히려 쓰면 **중복이 발생해** 에러가 난다.        
+
+## 리덕스를 쓰는 이유
+---
+여러 컴포넌트에서 공통적으로 쓰이는 데이터(로그인 유저의 username과 같은 정보)가 있는데 컴포넌트가 분리되어 있기 때문에 부모 컴포넌트에서 자식 컴포넌트로 각각 보내줘야하는 모양을 띄고 있다.       
+하지만 이러한 부모가 자식 컴포넌트로 데이터를 매번 보내주는 것은 매우 번거롭기 때문에 중앙저장소를 두는 것이 좋고 이런 역할을 하는 게 redux이다.        
+context API도 이런 역할을 한다.     
+
+리덕스는 코드량이 많지만 에러가 발생해도 추적하기 쉽기 때문에 좋다.     
+
+<br/>
+
+비동기의 3단계      
+1. 데이터 요청
+2. 데이터 수신
+3. 데이터 요청&수신 실패
+
+중앙처리하는 리덕스에서 데이터량이 많이지면 어떻게 관리하는가?      
+리덕스의 reducer를 쪼갤 수 있어서 쪼개서 관리한다.      
