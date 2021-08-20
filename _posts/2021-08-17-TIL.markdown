@@ -117,7 +117,7 @@ const LoginForm = () => {
 export default LoginForm;
 ```
 
-## customize하게 수정할 때 주의해야할 사항
+## component를 customize하게 수정할 때 주의해야할 사항
 ---
 LoginForm.js
 ```javascript
@@ -139,7 +139,7 @@ const ButtonWrapper = styled.div`
             //-----------------------------------------------------------------------------
             // 아랫부분 처럼하면 리렌더링할 때마다 새로 불러오게 된다.
             // 왜냐하면 {} === {} 는 항상 false가 나오기 때문이다.
-            // <div style={{ marginTop: "10px" }}>
+            // <//div style={//{ marginTop: "10px" }}>
             //     <Button type="primary" htmlType="submit" loading={false}>로그인</Button>
             //     <Link href="/signup"><a><Button>회원가입</Button></a></Link>
             // </div>
@@ -179,7 +179,7 @@ export default LoginForm;
 const 변수명 = styled.div` css `;
 
 //component일 때
-const 변수명 = styled(Input.Search)
+const 변수명 = styled(Input.Search)` css ;`
 ```
 
 

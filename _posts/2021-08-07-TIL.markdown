@@ -9,7 +9,7 @@ comments: false
 
 ## 반복되는 부분을 나타내는 방법 (map)
 ---
-```javascript
+```javascript       
 {['사과', '바나나','귤','감','배','밤'].map() => {
     return (
         <li>{v}</li>

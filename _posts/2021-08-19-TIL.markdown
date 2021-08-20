@@ -75,8 +75,8 @@ prev === next
 // false
 ```
 
-## reducer 만들기
-ーーー
+## reducer 만들기       
+---     
 reducers/index.js        
 ```javascript
 // initialState에 form을 만들어준다.

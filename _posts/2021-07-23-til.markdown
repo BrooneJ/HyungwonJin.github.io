@@ -9,7 +9,7 @@ comments: false
 
 ## mongoDB에서 find() 사용법(callback, promise)
 ---
-```javascript
+```javascript       
 //callback 방식
 // 두 번째 인자에서 videos 값을 가져올 수 있음
 export const home = (req, res) => {

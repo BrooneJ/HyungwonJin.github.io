@@ -11,7 +11,7 @@ comments: false
 ---
 서버 사이드 랜더링(SSR)이 아닌 프론트와 웹이 통신하는 방식으로          
 apiRouter.js파일을 만듦
-```javascript
+```javascript       
 import express from "express";
 
 const apiRouter = express.Router();

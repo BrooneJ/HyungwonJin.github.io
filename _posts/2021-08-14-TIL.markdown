@@ -10,7 +10,7 @@ comments: false
 ## useReducer
 ---
 state의 갯수를 줄이는 것            
-```javascript
+```javascript       
 const initialState = {
     winner: '',
     turn: 'O',
