@@ -1,0 +1,324 @@
+---
+layout: post
+title: "210821-TIL(Redux)"
+subtitle: "TIL-210821"
+categories: til
+tags: til
+comments: false
+---
+
+## 🌟Test를 위한 더미데이터 입력
+---
+reducers/post.js        
+```javascript       
+// post에 필요한 state 구조들을 저장
+export const initialState = {
+    mainPosts: [{
+        id: 1,
+        User: { // back엔드의 캐러셀에서 첫글자를 대문자로 해주기 때문에 맞춤
+            id: 1,
+            nickname: 'Doraemon',
+        },
+        content: '첫번째 게시글 #해시태그 #익스프레스',
+        Images: [{
+            src: "https://images.unsplash.com/"
+        }],
+        Comments: [{
+            User: {
+                nickname: 'nero',
+            },
+            content: '보기 좋습니다.',
+        }, {
+            User: {
+                nickname: 'Pikachu',
+            },
+            content: "아름답네요."
+        }]
+    }],
+    imagePaths: [], // 이미지가 저장될 공간
+    postAdded: false,
+}
+
+const ADD_POST = 'ADD_POST'; 
+// 오타를 방지하기 위해 => ""안에서 작동하지 않는 자동완성기능 떄문
+export const addPost = {
+    // dispatch애 사용될 Action
+    type: ADD_POST,
+}
+
+const dummyPost = { // 단순테스트 용
+    id: 2,
+    content: '더미데이터 입니다.',
+    User: {
+        id: 1,
+        nickname: 'Doraemon',
+    },
+    Images: [],
+    Comments: []
+}
+
+const reducer = (state = initialState, action) => {
+    // 위에서만든 initialState를 가져와서 사용
+    switch (action.type) {
+        case ADD_POST:
+            // 만약 dispatch(addPost)라는 명령이 들어오면 작동
+            return {
+                ...state, // 기존 게시물 
+                mainPosts: [dummyPost, ...state.mainPosts],
+                // 추가 되는 게시물을 앞에 입력해야 최상단에 위치함
+                postAdded: true,
+            }
+        default:
+            return state
+    }
+}
+
+export default reducer;
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+## 🌟게시글 올리는 화면 만들기
+---
+pages/index.js
+```javascript
+import { useSelector } from "react-redux";
+
+import AppLayout from "../components/AppLayout";
+import PostCard from "../components/PostCard";
+import PostForm from "../components/PostForm";
+
+
+const Home = () => {
+    const { isLoggedIn } = useSelector((state) => state.user);
+    const { mainPosts } = useSelector((state) => state.post);
+    return (
+        <AppLayout>
+            {isLoggedIn && <PostForm />} 
+            //login 했을 때만 게시글 작성폼이 보임
+            {mainPosts.map((post) => <PostCard key={post.id} post={post} />)}
+            // redux의 state에 저장된 mainPosts에 저장된 정보를 PostCard에 담아서 표시함
+        </AppLayout>
+    )
+}
+
+export default Home;
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+
+## 🌟PostForm 작성
+---
+새 글을 작성하는 공간을 만듦        
+```javascript
+import { Form, Button, Input } from "antd";
+import { useState, useCallback, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
+
+import { addPost } from "../reducers/post";
+
+const PostForm = () => {
+    const { imagePaths } = useSelector((state) => state.post);
+    const dispatch = useDispatch();
+
+    const imageInput = useRef(); // 실제 dom에 접근하기 위해서 ref 사용
+
+    const [text, setText] = useState('');
+    const onChangeText = useCallback((e) => {
+        setText(e.target.value);
+    }, []);
+
+    const onSubmit = useCallback(() => {
+        dispatch(addPost);
+        setText('');
+    }, []);
+
+    // 이미지 파일 올리는 창 만드는 방법 ✅
+    const onClickImageUpload = useCallback(() => {
+        imageInput.current.click();
+    }, [imageInput.current]);
+
+    return (
+        <Form 
+            style={{ margin: '10px 0 20px' }} 
+            encType="multipart/form-data" 
+            onFinish={onSubmit}
+            >
+            <Input.TextArea
+                value={text}
+                onChange={onChangeText}
+                maxLength={140}
+                placeholder="어떤 신기한 일이 있었나요?"
+            />
+            <div>
+                <input type="file" multiple hidden ref={imageInput} />
+                //이미지 업로드, hidden: 보이지 않지만 값은 서버로 전송하는 컨트롤. 
+                <Button onClick={onClickImageUpload}>이미지 업로드</Button>
+                <Button type="primary" style={{ float: "right" }} htmlType="submit">짹짹</Button>
+            </div>
+            <div>
+                {imagePaths.map((v) => (
+                    <div key={v} style={{ display: "inline-block " }}>
+                        <img src={v} style={{ width: '200px ' }} alt={v} />
+                        <div>
+                            <Button>제거</Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+        </Form>
+    )
+}
+
+export default PostForm;
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰          
+
+## 🌟optional chaining 연산자
+---
+```javascript
+const { me } = useSelector((state) => state.user);
+const id = me?.id;
+                |
+                |
+                V
+const id = useSelector((state) => state.user.me?.id);
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+## 🌟PostCard
+---
+PostCard는 pages/index.js에서 redux로부터 받아온 state.post.mainPosts의 내용을 그리는 component이다.        
+<br/>
+
+components/PostCard.js
+```javascript
+import React, { useState, useCallback } from 'react'
+import { useSelector } from 'react-redux';
+
+import PropTypes from 'prop-types';
+
+import { Button, Card, Popover } from 'antd'
+import Avatar from 'antd/lib/avatar/avatar';
+import { RetweetOutlined, HeartOutlined, MessageOutlined, EllipsisOutlined, HeartTwoTone } from '@ant-design/icons';
+
+import PostImages from './PostImages';
+
+const PostCard = ({ post }) => {
+    const [liked, setLinked] = useState(false);
+    const [commentFormOpened, setCommentFormOpened] = useState(false);
+    const onToggleLike = useCallback(() => {
+        setLinked((prev) => !prev);
+        // 이전 state를 나타내는 prev를 반대로 뒤집어주는 로직
+        // 하트에 불이 들어옴
+    }, []);
+    const onToggleComment = useCallback(() => {
+        setCommentFormOpened((prev) => !prev);
+        // 마찬가지로 이전 state를 뒤집음
+        // comment 보기 란을 접거나 펼 수 있음
+    }, [])
+
+    const id = useSelector((state) => state.user.me?.id);
+    return (
+        <div style={{ marginBottom: 20 }}>
+            <Card
+                cover={post.Images[0] && <PostImages images={post.Images} />}
+                actions={[
+                    <RetweetOutlined key="retweet" />,
+                    liked
+                        ? <HeartTwoTone twoToneColor="#eb2f96" key="heart" onClick={onToggleLike} />
+                        : <HeartOutlined key="heart" onClick={onToggleLike} />,
+                    <MessageOutlined key="comment" onClick={onToggleComment} />,
+                    <Popover key="more" content={(
+                        <Button.Group>
+                            {id && post.User.id === id ? (
+                                <>
+                                    <Button>수정</Button>
+                                    <Button type="danger">삭제</Button>
+                                </>
+                            ) : <Button>신고</Button>}
+                        </Button.Group>
+                    )}>
+                        <EllipsisOutlined />
+                    </Popover>
+                ]}
+            >
+                <Card.Meta
+                    avatar={<Avatar>{post.User.nickname[0]}</Avatar>}
+                    title={post.User.nickname}
+                    description={post.content}
+                />
+            </Card>
+            {commentFormOpened && (
+                <div>
+                    <CommentForm post={post} />
+                    // commentForm에서는 post의 id를 얻기 위해서 post를 보냄
+                    <List
+                        header={`${post.Comments.length}개의 댓글`}
+                        itemLayout="horizontal"
+                        dataSource={post.Comments}
+                        renderItem={(item) => (
+                            <li>
+                                <Comment
+                                    author={item.User.nickname}
+                                    avatar={<Avatar>{item.User.nickname[0]}</Avatar>}
+                                    content={item.content}
+                                />
+                            </li>
+                        )} />
+                </div>
+            )}
+            {/* <CommentForm post={post}/> // 게시글의 id를 얻기 위해 post를 전달
+            <Comments /> */}
+        </div >
+    )
+}
+
+PostCard.propTypes = {
+    post: PropTypes.shape({
+        id: PropTypes.number,
+        User: PropTypes.object,
+        content: PropTypes.string,
+        createdAt: PropTypes.object,
+        Comments: PropTypes.arrayOf(PropTypes.object),
+        Images: PropTypes.arrayOf(PropTypes.object),
+    }).isRequired,
+}
+
+export default PostCard
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+
+## 🌟 CommentForm
+---
+Comment를 등록하는 창에 대한 설정       
+```javascript
+import React, { useCallback } from 'react';
+import PropTypes from "prop-types";
+
+import { Form, Input, Button } from 'antd';
+
+import useInput from '../hooks/useinput';
+import { useSelector } from 'react-redux';
+
+// component/PostCard.js에서 받은 post (id를 받아오기 위해)
+const CommentForm = ({ post }) => {
+    const id = useSelector((state) => state.user.me?.id);
+    const [commentText, onChangeCommentText] = useInput('');
+    const onSubmitComment = useCallback(() => {
+        console.log(post.id, commentText);
+    }, [commentText])
+    return (
+        <Form onFinish={onSubmitComment}>
+            <Form.Item style={{ position: 'relative', margin: 0 }}>
+                <Input.TextArea value={commentText} onChange={onChangeCommentText} rows={4} />
+                <Button style={{ position: 'absolute', right: 0, bottom: -40 }} type="primary" htmlType="submit">삐약</Button>
+            </Form.Item>
+        </Form>
+    )
+}
+
+CommentForm.propTypes = {
+    post: PropTypes.object.isRequired,
+}
+
+export default CommentForm
+
+```
