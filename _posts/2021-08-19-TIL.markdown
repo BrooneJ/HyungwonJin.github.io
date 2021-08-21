@@ -161,9 +161,51 @@ const AppLayout =({ children}) => {
     )
 }
 ```
-
-### useDispatch
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔      
+## 🌟useSelector
 ---
+useSelector는 redux에 있는 인자를 받아옴        
+만약에 reducers폴더에서 index.js파일 속에서 다음과 같은 코드가 있다고 하자.     
+```javascript
+const initialState = {
+    user: {
+        isLoggedIn: false,
+        user: null,
+        signUpDate: {},
+        loginData: {},
+    },
+    post: {
+        mainPosts: [],
+    }
+}
+```
+이 코드의 형태는 그대로 redux의 구조가 된다.        
+그리고 이를 다음과 같이 redux에 알려야한다.     
+```javascript
+const rootReducer = (state = initialState, action) => {
+    switch (action.type){
+        ...
+}
+
+export default rootReducer;
+```
+rootReducer 함수의 state에 넣고 export하면 useSelector로 어디서든 불러 쓸 수 있는 redux가 완성돤다.
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔      
+## 🌟useDispatch
+---
+useDispatch 또한 중요하다.      
+useDispatch를 통해서 어떤 명령을 실행할 수 있기 때문이다.       
+
+<br/>
+
+reducers/index.js       
+```javascript
+
+```
+
+
 LoginForm.js
 ```javascript
 import { useDispatch } from 'react-redux';

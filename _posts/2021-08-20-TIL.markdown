@@ -1,0 +1,172 @@
+---
+layout: post
+title: "210820-TIL(Redux)"
+subtitle: "TIL-210820"
+categories: til
+tags: til
+comments: false
+---
+
+## Test를 위한 더미데이터 입력
+---
+reducers/post.js
+```javascript       
+export const initialState = {
+    mainPosts: [{
+        id: 1,
+        User: { // back엔드의 캐러셀에서 첫글자를 대문자로 해주기 때문에 맞춤
+            id: 1,
+            nickname: 'Doraemon',
+        },
+        content: '첫번째 게시글 #해시태그 #익스프레스',
+        Images: [{
+            src: "https://images.unsplash.com/photo-1629287120817-458e67b9f641?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2466&q=80"
+        }, {
+            src: "https://images.unsplash.com/photo-1466078415375-6d055d48434b?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2700&q=80"
+        }, {
+            src: "https://images.unsplash.com/photo-1628020681459-36f808315107?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2700&q=80"
+        }],
+        Comments: [{
+            User: {
+                nickname: 'nero',
+            },
+            content: '보기 좋습니다.',
+        }, {
+            User: {
+                nickname: 'Pikachu',
+            },
+            content: "아름답네요."
+        }]
+    }],
+    imagePaths: [], // 이미지가 저장될 공간
+    postAdded: false,
+}
+
+const ADD_POST = 'ADD_POST'; // 오타를 방지하기 위해
+export const addPost = {
+    type: ADD_POST,
+}
+
+const dummyPost = {
+    id: 2,
+    content: '더미데이터 입니다.',
+    User: {
+        id: 1,
+        nickname: 'Doraemon',
+    },
+    Images: [],
+    Comments: []
+}
+
+const reducer = (state = initialState, action) => {
+    switch (action.type) {
+        case ADD_POST:
+            return {
+                ...state,
+                mainPosts: [dummyPost, ...state.mainPosts],
+                // 추가 되는 게시물을 앞에 입력해야 최상단에 위치함
+                postAdded: true,
+            }
+        default:
+            return state
+    }
+}
+
+export default reducer;
+```
+
+## 게시글 올리는 화면 만들기
+---
+```javascript
+import { useSelector } from "react-redux";
+
+import AppLayout from "../components/AppLayout";
+import PostCard from "../components/PostCard";
+import PostForm from "../components/PostForm";
+
+
+const Home = () => {
+    const { isLoggedIn } = useSelector((state) => state.user);
+    const { mainPosts } = useSelector((state) => state.post);
+    return (
+        <AppLayout>
+            {isLoggedIn && <PostForm />} //login 했을 떄만 게시글 작성폼이 보임
+            {mainPosts.map((post) => <PostCard key={post.id} post={post} />)}
+        </AppLayout>
+    )
+}
+
+export default Home;
+```
+
+## PostForm 작성
+---
+```javascript
+import { Form, Button, Input } from "antd";
+import { useState, useCallback, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { addPost } from "../reducers/post";
+
+const PostForm = () => {
+    const { imagePaths } = useSelector((state) => state.post);
+    const dispatch = useDispatch();
+    const imageInput = useRef(); // 실제 dom에 접근하기 위해서 ref 사용
+    const [text, setText] = useState('');
+    const onChangeText = useCallback((e) => {
+        setText(e.target.value);
+    }, []);
+    const onSubmit = useCallback(() => {
+        dispatch(addPost);
+        setText('');
+    }, []);
+    const onClickImageUpload = useCallback(() => {
+        imageInput.current.click();
+    }, [imageInput.current]);
+    return (
+        <Form 
+            style={{ margin: '10px 0 20px' }} 
+            encType="multipart/form-data" 
+            onFinish={onSubmit}
+            >
+            <Input.TextArea
+                value={text}
+                onChange={onChangeText}
+                maxLength={140}
+                placeholder="어떤 신기한 일이 있었나요?"
+            />
+            <div>
+                <input type="file" multiple hidden ref={imageInput} />//이미지 업로드
+                <Button onClick={onClickImageUpload}>이미지 업로드</Button>
+                <Button type="primary" style={{ float: "right" }} htmlType="submit">짹짹</Button>
+            </div>
+            <div>
+                {imagePaths.map((v) => (
+                    <div key={v} style={{ display: "inline-block " }}>
+                        <img src={v} style={{ width: '200px ' }} alt={v} />
+                        <div>
+                            <Button>제거</Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+        </Form>
+    )
+}
+
+export default PostForm;
+```
+
+## optional chaining 연산자
+---
+```javascript
+const { me } = useSelector((state) => state.user);
+const id = me?.id;
+                |
+                |
+                V
+const id = useSelector((state) => state.user.me?.id);
+```
+
+## PostCard
+---
