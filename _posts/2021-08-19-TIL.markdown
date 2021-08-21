@@ -7,7 +7,7 @@ tags: til
 comments: false
 ---
 
-# Redux
+# 🌟Redux
 ---
 ![그림 1-1](/assets/img/web/2021-08-19/1-1.png)         
 중앙 저장소의 데이터가 있으면 이를 바꾸기 위해서는 action이라는 것이 필요하다.
@@ -25,9 +25,9 @@ action설정 -> dispatch -> reduce case작성 -> 데이터 번경
 
 <br/>
 
-장점: 리덕스를 쓰면 action들을 추적해서 에러가 발생한 부분을 쉽게 찾을 수 있다.
-
-## 불변성
+장점: 리덕스를 쓰면 action들을 추적해서 에러가 발생한 부분을 쉽게 찾을 수 있다.     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+## 🌟불변성
 ---
 ```javascript
 {} === {} // false
@@ -73,9 +73,9 @@ prev === next
 
 { a: 'b' } === { a: 'b' }
 // false
-```
-
-## reducer 만들기       
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+## 🌟reducer 만들기       
 ---     
 reducers/index.js        
 ```javascript
@@ -160,8 +160,8 @@ const AppLayout =({ children}) => {
         </Row>
     )
 }
-```
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔      
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰          
 ## 🌟useSelector
 ---
 useSelector는 redux에 있는 인자를 받아옴        
@@ -189,10 +189,59 @@ const rootReducer = (state = initialState, action) => {
 
 export default rootReducer;
 ```
-rootReducer 함수의 state에 넣고 export하면 useSelector로 어디서든 불러 쓸 수 있는 redux가 완성돤다.
+rootReducer 함수의 state에 넣고 export하면 useSelector로 어디서든 불러 쓸 수 있는 redux가 완성돤다.     
 
+<br/>
 
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔      
+이를 분리해 줄 수 있다.     
+아래에서 reducer 쪼개기에서 살펴볼테지만 미리 보면      
+initialState의 요소인 user, post를 다른 reducer파일로 만들어준다.       
+
+reducers/user.js
+```javascript
+// 이미 user로 파일을 나누었기 때문에 user: 를 사용하지 않아 깊이가 한 단계 올라간다.
+const initialState = {
+    //user: {
+    isLoggedIn: false,
+    user: null,
+    signUpDate: {},
+    loginData: {},
+}
+
+const reducer = (state = initialState, action) => {
+    // 그리고 여기의 state에 initialState를 넣어준다.
+    switch (action.type) {
+        ...
+    }
+}
+
+export default reducer;
+```
+
+reducers/index.js       
+```javascript       
+import { HYDRATE } from "next-redux-wrapper";
+import { combineReducers } from "redux";
+
+import user from "./user";
+// user의 state를 불러와서 쓸 수 있음
+// 신기하게도 reducer를 export 했는데 user라고 사용가능
+// export default면 관계 없나봄
+import post from "./post";
+
+const rootReducer = combineReducers({
+    // SSR을 위한 index
+    index: (state = {}, action) => {
+        ...
+    },
+    user, // 여기에 state를 저장
+    post,
+});
+
+export default rootReducer;
+```
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
 ## 🌟useDispatch
 ---
 useDispatch 또한 중요하다.      
@@ -200,35 +249,32 @@ useDispatch를 통해서 어떤 명령을 실행할 수 있기 때문이다.
 
 <br/>
 
-reducers/index.js       
-```javascript
-
-```
-
-
 LoginForm.js
 ```javascript
 import { useDispatch } from 'react-redux';
-import { loginAction } from "../reducers";
+// reducers에서 만들어 준 명령을 사용하기 위해서는 useDispatch가 필요
+import { loginAction } from "../reducers/user";
+// user에서 만든 loginAction을 불러옴
 
 const LoginForm = () => { //props 지움
     const dispatch = useDispatch();
 
     const onSubmitForm = useCallback(() => {
         dispatch(loginAction({id, password}));
+        // dispatch가 loginAction을 실행함
     }, [])
 }
-```
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
 
-
-### HYDRATE 
+### 🌟HYDRATE 
 ---
 reducer/index.js
 ```
 import { HYDRATE } from "next-redux-wrapper"
 ```
-
-## Middleware
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+## 🌟Middleware
 ---
 개발자 도구와 연동가능하게 설치
 ```
@@ -248,9 +294,9 @@ const configureStore = () => {
     const store = createStore(reducer, enhancer);
     return store;
 }
-```
-
-## reducer 쪼개기
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+## 🌟reducer 쪼개기
 ---
 reducer/post.js & user.js 파일 생성     
 <br/>
@@ -265,7 +311,7 @@ export const initialState = {
     loginData: {},
 }
 
-// user와 관련된 action을 전부 page.js에 작성
+// user와 관련된 action을 전부 user.js에 작성
 export const loginAction = (data) => {
     return {
         type: "LOG_IN",

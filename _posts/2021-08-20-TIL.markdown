@@ -7,7 +7,7 @@ tags: til
 comments: false
 ---
 
-## Test를 위한 더미데이터 입력
+## 🌟Test를 위한 더미데이터 입력
 ---
 reducers/post.js
 ```javascript       
@@ -73,10 +73,11 @@ const reducer = (state = initialState, action) => {
 }
 
 export default reducer;
-```
-
-## 게시글 올리는 화면 만들기
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+## 🌟게시글 올리는 화면 만들기
 ---
+pages/index.js
 ```javascript
 import { useSelector } from "react-redux";
 
@@ -97,9 +98,10 @@ const Home = () => {
 }
 
 export default Home;
-```
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
 
-## PostForm 작성
+## 🌟PostForm 작성
 ---
 ```javascript
 import { Form, Button, Input } from "antd";
@@ -155,9 +157,10 @@ const PostForm = () => {
 }
 
 export default PostForm;
-```
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰          
 
-## optional chaining 연산자
+## 🌟optional chaining 연산자
 ---
 ```javascript
 const { me } = useSelector((state) => state.user);
@@ -166,7 +169,7 @@ const id = me?.id;
                 |
                 V
 const id = useSelector((state) => state.user.me?.id);
-```
-
-## PostCard
+```     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+## 🌟PostCard
 ---
