@@ -1,0 +1,192 @@
+---
+layout: post
+title: "210823-TIL(javascript, Redux-saga)"
+subtitle: "TIL-210823"
+categories: til
+tags: til
+comments: false
+---
+# 🌟공부할 거리
+---
+blocking과 non-blocking 이란?
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 populate에서 깊이에 관해서 주의할 사항
+---
+![1-1](/assets/img/web/2021-08-23/1-1.png)      
+populate를 사용해서 얻은 data를 사용했더니 이와 같이 word.mean의 length를 찾을 수 없다고 나왔다.        
+처음에는 mean 부분이 [Array]로 표기돼서 그런 줄 알았지만 문제는 populate를 사용했기 때문에 한 층 더 깊이의 문제가 발생했다는 것을 알게되었다.       
+따라서 다음 코드와 같이 수정해 주었다.      
+userController.js 
+```javascript
+export const see = async (req, res) => {
+    const { id } = req.params;
+    const wordsData = await User.findById(id).populate("words");
+
+    return res.render("users/profile", { pageTitle: "Profile", words: wordsData.words });
+    // wordsData를 그대로 보내는 것이 아닌 한 층 더 들어간 wordsData.words의 데이터를 보내주었다.
+}
+```
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 populate된 data sort 하기
+---
+<https://stackoverflow.com/questions/16352768/how-to-sort-a-populated-document-in-find-request>     
+<br/>
+
+populate 되지 않은 data들은 다음과 같이 sort 할 수 있다.     
+```javascript
+const words = await Word.find({}).sort({ createdAt: "desc" })
+```
+하지만 populate된 data들은 그냥 뒤에 sort를 붙여준다고 해서 정렬되지 않는다.        
+<br/> 
+
+❌ 잘못된 방법
+```javascript
+const wordsData = await User.findById(id).populate("words");
+```
+✅ 올바른 방법
+```javascript
+const wordsData = await User.findById(id).populate({ 
+    path: "words", 
+    options: { 
+        sort: { createdAt: "desc" } 
+        } 
+    });
+```
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟redux-saga
+---
+middleware 기능 담당        
+configureStore.js
+```javascript
+import { all, call, fork, put, take } from "@redux-saga/core/effects";
+import axios from 'axios';
+
+//function 제네레이터 아님
+function logInAPI(data) { // (3) call을 해서 받은 logInAPI(action.data)임
+    return axios.post('/api/login', data);
+}
+
+function* logIn(action) { // (1)watchLogIn함수에서 받은 action을 매개변수로 받음
+    try {
+        const result = yield call(logInAPI, action.data); // (2)action으로 받은 로그인 data가 들어있음
+        yield put({
+            type: 'LOG_IN_SUCCESS',
+            data: result.data,
+        })
+    } catch (err) {
+        yield put({ // put은 dispatch라고 생각
+            type: 'LOG_IN_FAILURE', // Action이라고 생각
+            data: err.response.data,
+        })
+    }
+}
+
+function logOutAPI() { // 제네레이터 아님
+    return axios.post('/api/logout');
+}
+
+function* logOut() {
+    try {
+        const result = yield call(logOutAPI);
+        yield put({
+            type: 'LOG_OUT_SUCCESS',
+            data: result.data,
+        })
+    } catch (err) {
+        yield put({
+            type: 'LOG_OUT_FAILURE',
+            data: err.response.data,
+        })
+    }
+}
+
+function addPostAPI(data) { // 제네레이터 아님
+    return axios.post('/api/post', data);
+}
+
+function* addPost(action) {
+    try {
+        const result = yield call(addPostAPI, action.data);
+        yield put({
+            type: 'Add_POST_SUCCESS',
+            data: result.data,
+        })
+    } catch (err) {
+        yield put({
+            type: 'Add_POST_FAILURE',
+            data: err.response.data,
+        })
+    }
+}
+
+function* watchLogIn() {
+    yield take('LOG_IN_REQUEST', logIn); //LOG_IN_REQUEST 이라는 명령이 시행될 때까지 기다림
+}
+
+function* watchLogOut() {
+    yield take('LOG_OUT_REQUEST', logOut);
+}
+
+function* watchAddPost() {
+    yield take('ADD_POST_REQUEST', addPost);
+}
+
+export default function* rootSaga() {
+    yield all([ // 배열 안에 있는 모든 것을 실행
+        fork(watchLogIn),   // fork는 함수를 실행
+        fork(watchLogOut),
+        fork(watchAddPost),
+    ]);
+}
+```
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟call 이랑 fork의 차이?
+---
+fork: 비동기 함수호출       
+call: 동기 함수 호출
+
+```javascript
+function logInAPI() {
+    return axios.post('/api/login');
+}
+
+const result = yield call(logInAPI);
+// call을 하면 call 함수가 logInAPI함수를 불러서 실행한 뒤
+// return할 때까지 기다린 후 값을 받아서 result에 넣음
+
+// call은 아래 코드랑 비슷함
+axios.post('/api/login')
+    .then(() => { // then을 해서 결과를 기다림
+        yield put({
+            type: 'LOG_IN_SUCCESS',
+            data: result.data,
+        })
+    })
+
+const reuslt = yield fork(logInAPI);
+// fork는 비동기이기 때문에 요청을 기다리지 않고
+// 바로 다음 코드를 실행한다. non-blocking
+
+// fork는 아래코드랑 비슷함
+axios.post('/api/login');
+yield put({ // 비동기이기 때문에 then을 해서 결과를 기다리지 않음
+    type: 'LOG_IN_SUCCESS',
+    data: result.data,
+})
+```
+현재 코드에서는 fork를 하면 말이 안된다. 왜냐하면 result값을 아직 받지 않았는데. data: result.data코드를 실행하면 error가 발생하기 때문에       

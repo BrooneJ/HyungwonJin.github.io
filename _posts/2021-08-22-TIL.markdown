@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "210821-TIL(Redux)"
-subtitle: "TIL-210821"
+title: "210822-TIL(Redux)"
+subtitle: "TIL-210822"
 categories: til
 tags: til
 comments: false
