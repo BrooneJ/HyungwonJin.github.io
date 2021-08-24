@@ -6,7 +6,7 @@ categories: til
 tags: til
 comments: false
 ---
-# 🌟공부할 거리
+# 📝 공부할 거리
 ---
 blocking과 non-blocking 이란?
 

@@ -6,7 +6,7 @@ categories: til
 tags: til
 comments: false
 ---
-# 🌟공부할 거리
+# 📝 공부할 거리
 ---
 img 태그 안에서 role="presentation"은 뭘 가리키는가?
 

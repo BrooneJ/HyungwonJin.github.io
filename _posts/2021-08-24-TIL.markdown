@@ -1,0 +1,488 @@
+---
+layout: post
+title: "210824-TIL(Redux-saga)"
+subtitle: "TIL-210824"
+categories: til
+tags: til
+comments: false
+---
+
+# 📝 공부할 거리
+---
+- 쓰로틀링과 디바운싱       
+throttling: 마지막 함수가 호출된 후 일정 시간이 지나기 전에 다시 호출되지 않도록 하는 것    
+debouncing: 연이어 호출되는 함수들 중 마지막 함수(또는 제일 처음)만 호출하도록 하는 것    
+<https://www.zerocho.com/category/JavaScript/post/59a8e9cb15ac0000182794fa>
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 take & takeEvery
+---
+saga에서 action이 들어올 때까지 기다리는 take 기능은 1번 시행되고 나면 다시 사용할 수 없기 때문에 문제가 발생한다.      
+예를 들어 로그인을 1번 하고 나면 다시 로그인 할 수 없는 문제가 발생한다.        
+<br/>
+
+이런 문제가 발생하지 않도록 2가지 방법을 생각해 볼 수 있다.
+1. while문을 사용한다.
+2. takeEvery를 사용한다.
+
+sagas/index.js
+```javascript
+function* watchLogIn() {
+    yield take('LOG_IN_REQUEST', logIn); //LOG_IN_REQUEST 이라는 명령이 시행될 때까지 기다림
+} // 1번 실행하고 나면 다시 사용할 수 없는 문제가 있음
+
+// 1. while문을 사용한 방법
+function* watchLogIn() {
+    while(true) {
+        yield take('LOG_IN_REQUEST', logIn);
+    }
+}
+
+// 2. takeEvery를 사용한 방법
+function* watchLogIn() {
+    yield takeEvery('LOG_IN_REQUEST', logIn);
+}
+```     
+
+☑️ 차이점:      
+while take: 동기적(sync)        
+takeEvery: 비동기적(async)      
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 takeLatest & throttle
+---     
+1. takeLatest      
+코드 예시)      
+    ```javascript
+    function* watchLogIn() {
+        yield takeLatest('LOG_IN_REQUEST', logIn);
+    }
+    ```   
+    ![1-1](/assets/img/web/2021-08-24/1-1.png)      
+    만약 두 번을 반복해서 눌렀을 경우에 돌아온 응답 중 마지막 것만 받아들인다.      
+    <br/>
+
+    🚫 단점     
+    백엔드에는 데이터가 두 번 전송되므로 프론트엔드에서만 해당되는 사항이다.        
+    즉, 새로 고침하면 백엔드에서 받아온 데이터는 2개가 저장되어 있게된다.
+
+2. throttle     
+    코드 예시)
+    ```javascript
+    function* watchLogIn() {
+        yield throttle('LOG_IN_REQUEST', logIn, 10000);
+    }
+    ```   
+    주어진 시간 안에는 1번만 요청할 수 있도록 제한한다.     
+
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 saga 쪼개기
+---     
+sagas/index.js에 모든 코드를 모아놓으면 너무 길어져서 나눠줘야한다.     
+sagas/user.js와 sagas/post.js를 만들어준다.     
+
+sagas/user.js
+```javascript
+import { all, fork, takeLatest, delay } from "redux-saga/effects";
+import axios from "axios";
+
+
+//function 제네레이터 아님
+function logInAPI(data) { // (3) call을 해서 받은 logInAPI(action.data)임
+    return axios.post('/api/login', data);
+}
+
+function* logIn(action) { // (1)watchLogIn함수에서 받은 action을 매개변수로 받음
+    try {
+        // const result = yield call(logInAPI, action.data); // (2)action으로 받은 로그인 data가 들어있음
+        yield delay(1000);
+        yield put({
+            type: 'LOG_IN_SUCCESS',
+            data: result.data,
+        })
+    } catch (err) {
+        yield put({ // put은 dispatch라고 생각
+            type: 'LOG_IN_FAILURE', // Action이라고 생각
+            data: err.response.data,
+        })
+    }
+}
+
+function logOutAPI() { // 제네레이터 아님
+    return axios.post('/api/logout');
+}
+
+function* logOut() {
+    try {
+        // const result = yield call(logOutAPI);
+        yield delay(1000);
+        yield put({
+            type: 'LOG_OUT_SUCCESS',
+            data: result.data,
+        })
+    } catch (err) {
+        yield put({
+            type: 'LOG_OUT_FAILURE',
+            data: err.response.data,
+        })
+    }
+}
+
+function* watchLogIn() {
+    yield takeLatest('LOG_IN_REQUEST', logIn); //LOG_IN_REQUEST 이라는 명령이 시행될 때까지 기다림
+}
+
+function* watchLogOut() {
+    yield takeLatest('LOG_OUT_REQUEST', logOut);
+}
+
+
+export default function* userSaga() {
+    yield all([
+        fork(watchLog),
+        fork(watchLogOut),
+    ])
+}
+```
+<br/>
+
+sagas/post.js
+```javascript
+import { all, fork, takeLatest, delay, put } from "redux-saga/effects";
+
+function addPostAPI(data) { // 제네레이터 아님
+    return axios.post('/api/post', data);
+}
+
+function* addPost(action) {
+    try {
+        // const result = yield call(addPostAPI, action.data);
+        yield delay(1000);
+        yield put({
+            type: 'Add_POST_SUCCESS',
+            data: result.data,
+        })
+    } catch (err) {
+        yield put({
+            type: 'Add_POST_FAILURE',
+            data: err.response.data,
+        })
+    }
+}
+
+
+function* watchAddPost() {
+    yield takeLatest('ADD_POST_REQUEST', addPost);
+}
+
+export default function* postSaga() {
+    yield all([
+        fork(watchAddPost),
+    ])
+}
+```
+<br/>
+
+sagas/index/js
+```javascript
+import { all, call, fork, put, takeLatest, delay } from "@redux-saga/core/effects";
+
+import postSaga from "./post";
+import userSaga from "./user";
+
+export default function* rootSaga() {
+    yield all([ // 배열 안에 있는 모든 것을 실행
+        fork(postSaga),   // fork는 함수를 실행
+        fork(userSaga),
+    ]);
+}
+```
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 reducer 정리
+---     
+reducers/user.js
+```javascript
+export const initialState = {
+    isLoggingIn: false, // 로그인 시도 중
+    isLoggedIn: false,
+    isLoggingOut: false, // 로그아웃 시도 중
+    me: null,
+    signUpData: {},
+    loginData: {},
+}
+
+// login에 관련된 action 3가지
+export const loginRequestAction = (data) => {
+    return {
+        type: "LOG_IN_REQUEST",
+        data,
+    }
+}
+
+export const loginSuccessAction = (data) => {
+    return {
+        type: "LOG_IN_SUCCESS",
+        data,
+    }
+}
+
+export const loginFailureAction = () => {
+    return {
+        type: "LOG_IN_FAILURE",
+    }
+}
+
+// logout에 관련된 action 3가지
+export const logoutRequestAction = () => {
+    return {
+        type: "LOG_OUT_REQUEST",
+    }
+}
+
+export const logoutSuccessAction = () => {
+    return {
+        type: "LOG_OUT_SUCCESS",
+    }
+}
+
+export const logoutFailureAction = () => {
+    return {
+        type: "LOG_OUT_FAILURE",
+    }
+}
+
+
+const reducer = (state = initialState, action) => {
+    switch (action.type) {
+
+        case 'LOG_IN_REQUEST':
+            return {
+                ...state,
+                isLoggingIn: true,
+            }
+
+        case 'LOG_IN_SUCCESS':
+            return {
+                ...state,
+                isLoggingIn: false,
+                isLoggedIn: true,
+                me: action.data,
+            };
+
+        case 'LOG_IN_FAILURE':
+            return {
+                ...state,
+                isLoggingIn: false,
+                isLoggedIn: false,
+            };
+
+        case 'LOG_OUT_REQUEST':
+            return {
+                ...state,
+                isLoggingOut: true,
+            }
+
+        case 'LOG_OUT_SUCCESS':
+            return {
+                ...state,
+                isLoggingOut: false,
+                isLoggedIn: false,
+                me: null,
+            }
+
+        case 'LOG_OUT_FAILURE':
+            return {
+                ...state,
+                isLoggingOut: false,
+            }
+
+        default:
+            return state
+    }
+}
+
+export default reducer;
+```
+
+component/LoginForm.js        
+```javascript
+import { useDispatch, useSelector } from "react-redux";
+
+import { loginRequestAction } from "../reducers/user";
+...
+const LoginForm = () => {
+    const { isLoggingIn } = useSelector((state) => state.user);
+    ...
+    const onSubmitForm = useCallback(() => {
+        ...
+->     dispatch(loginRequestAction({ id, password }));
+        ...
+    }, [id, password]);
+    return (
+        <FormWrapper onFinish={onSubmitForm}>
+            ...
+            <ButtonWrapper>
+->              <Button type="primary" htmlType="submit" loading={isLoggingIn}>로그인</Button> // loading={false}에서 isLogginIn으로 바꿔줌
+                <Link href="/signup"><a><Button>회원가입</Button></a></Link>
+            </ButtonWrapper>
+        </FormWrapper>
+    )
+}
+```
+
+component/UserProfile.js        
+```javascript
+...
+import { useDispatch, useSelector } from "react-redux";
+
+import { logoutRequestAction } from '../reducers/user';
+
+const UserProfile = () => {
+    const dispatch = useDispatch();
+->  const { me, isLoggingOut } = useSelector((state) => state.user);
+
+    const onLogOut = useCallback(() => {
+->      dispatch(logoutRequestAction());
+    }, [])
+    return (
+        <Card
+            actions={[
+                <div key="twit">짹짹<br />0</div>,
+                <div key="following">팔로잉<br />0</div>,
+                <div key="following">팔로워<br />0</div>,
+            ]}
+        >
+            <Card.Meta
+->              avatar={<Avatar>{me.nickname[0]}</Avatar>} // me를 쓸 수 있게 되어 불러올 수 있음
+->              title={me.nickname}
+            />
+->          <Button onClick={onLogOut} loading={isLoggingOut}>로그아웃</Button>
+        </Card>
+    )
+}
+
+export default UserProfile;
+```
+
+## 🌟 로그인 실행순서        
+---
+1. component/LoginForm.js 파일의        
+    ```javascript
+    const LoginForm = () => {
+        const { isLoggingIn } = useSelector((state) => state.user);
+        ...
+        const onSubmitForm = useCallback(() => {
+            ...
+    ->     dispatch(loginRequestAction({ id, password }));
+            ...
+        }, [id, password]);
+        return (
+            <FormWrapper onFinish={onSubmitForm}>
+                ...
+                <ButtonWrapper>
+    ->              < type="primary" htmlType="submit" loading={isLoggingIn}>로그인</ Button> // loading={false}에서 isLogginIn으로 바꿔줌
+                    <Link href="/signup"><a><Button>회원가입</Button></a></Link>
+                </ButtonWrapper>
+            </FormWrapper>
+        )
+    }
+    ```
+    로그인 버튼을 누르면 onFinish={onSubmitForm}이 실행되고 onSubmitForm 함수 속의 dispatch (loginRequestAction({ id, password }))이 실행된다.
+
+2. reducers/user.js 파일의      
+    ```javascript
+    export const loginRequestAction = (data) => {
+        return {
+            type: "LOG_IN_REQUEST",
+            data,
+        }
+    }
+    const reducer = (state = initialState, action) => {
+        switch (action.type) {
+
+            case 'LOG_IN_REQUEST':
+                return {
+                    ...state,
+                    isLoggingIn: true,
+                }
+    ```
+    loginRequestAction() 함수 속의 type: "LOG_IN_REQUEST"가 reducer로 전달되고 switch문의 LOG_IN_REQUEST에 걸리며 로그인을 요청한다.
+
+3. sagas/user.js 파일의     
+    ```javascript
+    function* logIn(action) { // (1)watchLogIn함수에서 받은 action을 매개변수로 받음
+        try {
+            // const result = yield call(logInAPI, action.data); // (2)action으로 받은 로그인   data가 들어있음
+            yield delay(1000);
+            yield put({
+                type: 'LOG_IN_SUCCESS',
+                data: action.data,
+                // data: result.data,
+            })
+        } catch (err) {
+            yield put({ // put은 dispatch라고 생각
+                type: 'LOG_IN_FAILURE', // Action이라고 생각
+                data: err.response.data,
+            })
+        }
+    }
+    function* watchLogIn() {
+        yield takeLatest('LOG_IN_REQUEST', logIn); //LOG_IN_REQUEST 이라는 명령이 시행될 때까지 기다림
+    }
+    export default function* userSaga() {
+        yield all([
+            fork(watchLogIn),
+            fork(watchLogOut),
+        ])
+    }
+    ```
+    2번과 동시에 watchLogIn() 함수 속에서 LOG_IN_REQUEST을 감지하게 되고 logIn(action)함수가 실행되며 로그인이 된다.
+
+4. 3에서 LOG_IN_SUCCESS가 dispatch 되면 reducers/user.js 파일의      
+    ```javascript
+    const reducer = (state = initialState, action) => {
+        switch (action.type) {
+            ...
+
+            case 'LOG_IN_SUCCESS':
+                return {
+                    ...state,
+                    isLoggingIn: false,
+                    isLoggedIn: true,
+                    me: { ...action.data, nickname: "JIN" },
+                };
+        }
+    }
+    ```
+    reducer에 전달되어 LOG_IN_SUCCESS 메세지를 수신하고 return 값을 실행하게 된다. 그리고 me에 데이터가 들어감. 그 후 isLoggedIn이 true가 됨.       
+
+5. isLoggedIn이 true가 되면 component/AppLayout.js 파일의
+    ```javascript
+    const AppLayout = ({ children }) => {
+        const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
+        // isLoggedIn 값이 바뀌면 아랫가 리랜더링 됨
+        return (
+            <div>
+                ...
+                    <Col xs={24} md={6}>
+                        {isLoggedIn ? <UserProfile /> : <LoginForm />}
+                    </Col>
+                    ...
+                </Row>
+            </div>
+        )
+    }
+    ```
+    isLoggedIn가 true가 되고 더이상 LoginFrom이 아닌 UserProfile을 실행하게 된다.       

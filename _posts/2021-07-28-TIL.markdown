@@ -172,6 +172,11 @@ module.exports = {
 };
 ```
 
+src/client/js/main.js       
+```javascript
+import "../scss/styles.csss";
+```
+
 ## mini-css-extract
 ---      
 <span style="color:yellow">style-loader로 js에 css를 주입 시키는 방식 말고 파일을 따로 두는 방법</span>    
