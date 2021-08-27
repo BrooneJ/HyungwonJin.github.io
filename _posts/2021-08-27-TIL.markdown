@@ -1,0 +1,292 @@
+---
+layout: post
+title: "210827-TIL(Redux-saga)"
+subtitle: "TIL-210827"
+categories: til
+tags: til
+comments: false
+---
+
+# 🌟 공부할 거리
+---
+- unshift     
+    ```javascript
+    const array1 = [1, 2, 3];
+
+    console.log(array1.unshift(4, 5));
+    // expected output: 5
+
+    console.log(array1);
+    // expected output: Array [4, 5, 1, 2, 3]
+    ```
+- immer 사용법
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 comment 입력하면 작동하는 과정
+---
+1. components/CommentForm.js에서 comment 작성해서 onSubmit하면      
+```javascript
+const CommentForm = ({ post }) => {
+    const id = useSelector((state) => state.user.me?.id);
+    const [commentText, onChangeCommentText, setCommentText] = useInput('');
+
+    const onSubmitComment = useCallback(() => {
+        dispatch({
+            type: ADD_COMMENT_REQUEST,
+            data: { content: commentText, postId: post.id, userId: id }
+        });
+    }, [commentText, id]);
+
+    return (
+        <Form onFinish={onSubmitComment}>
+            <Form.Item style={{ position: 'relative', margin: 0 }}>
+                <Input.TextArea value={commentText} onChange={onChangeCommentText} rows={4} />
+                <Button
+->                  style={{ position: 'absolute', right: 0, bottom: -40, zIndex: 1 }} // zIndex 다른 요소보다 위에 올라가도록
+                    type="primary"
+                    htmlType="submit"
+                    loading={addCommentLoading}
+->              >삐약</Button>
+            </Form.Item>
+        </Form>
+    )
+}
+```
+data에 { content: commentText, postId: post.id, userId: id } 이 객체 데이터가 들어간다.    
+>post => props로부터 받음        
+id => useSelector로 redux에서 가져옴      
+commentText => component state에 있음       
+
+이를 dispatch해서 ADD_COMMENT_REQUEST에 올린다.     
+
+2. 올라온 데이터를 saga가 받는다.       
+sagas/post.js       
+```javascript
+function* addComment(action) { // (2)여기서 실행한다.
+    try {
+        // const result = yield call(addCommentAPI, action.data);
+        yield delay(1000);
+        yield put({
+            type: ADD_COMMENT_SUCCESS, // 에러가 발생하지 않았으면 ADD_COMMENT_SUCCESS를 보냄
+            data: action.data, // 인수를 여기서 받음
+        })
+    } catch (err) {
+        yield put({
+            type: ADD_COMMENT_FAILURE,
+            data: err.response.data,
+        })
+    }
+}
+
+function* watchAddComment() {
+    yield takeLatest(ADD_COMMENT_REQUEST, addComment);
+} // (1) 여기서 ADD_COMMENT_REQUEST에 올라온 데이터를 받아서
+```
+정상적으로 ADD_COMMENT_REQUEST가 실행 됐으면 ADD_COMMENT_SUCCESS action을 보낸다.       
+
+3. ADD_COMMENT_SUCCESS를 reducer에서 확인한다.      
+reducers/post.js        
+```javascript
+const reducer = (state = initialState, action) => {
+    switch (action.type) {
+        ...
+        case ADD_COMMENT_SUCCESS: {
+            const postIndex = state.mainPosts.findIndex((v) => v.id === action.data.postId);
+            const post = { ...state.mainPosts[postIndex] };
+            post.Comments = [dummyComment(action.data.content), ...post.Comments];
+            const mainPosts = [...state.mainPosts];
+            mainPosts[postIndex] = post;
+            return {
+                ...state,
+                mainPosts,
+                addCommentLoading: false,
+                addCommentDone: true,
+            }
+        }
+        ...
+}
+```
+
+- 댓글 정보를 찾는 순서       
+```javascript
+export const initialState = {
+    mainPosts: [{
+        id: 1,
+        ...
+        Comments: [...]
+    }],
+    ...
+}
+```
+게시글의 id를 찾고 그 속에서 Comments에 접근한다.
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 post를 삭제하는 방법
+---
+게시물 속 '삭제' 버튼을 클릭하면 아래 코드에서 다음과 같은 동작이 일어난다.     
+
+components/PostCard.js      
+```javascript
+import { REMOVE_POST_REQUEST } from '../reducers/post';
+
+const PostCard = ({ post }) => {
+    const dispatch = useDispatch();
+    const { removePostLoading } = useSelector((state) => state.post);
+
+    const onRemovePost = useCallback(() => { // (2) dispatch가 동작하면서
+        dispatch({
+            type: REMOVE_POST_REQUEST, // REMOVE_POST_REQUEST 액션을 보냄
+            data: post.id, // props로 받은 post.id 데이터도 올림
+        })
+    }, []);
+    ...
+    return (
+        <div style={{ marginBottom: 20 }}>
+            <Card            
+                actions={[
+                    ...
+                        <Button.Group>
+                            {id && post.User.id === id ? (
+                                <>
+                                    <Button>수정</Button>
+->                                  <Button type="danger" 
+                                            loading={removePostLoading} 
+                                            onClick={onRemovePost}
+                                            >삭제</Button>
+                                    //removePostLoading이 완료될 때까지 로딩화면이 나타남
+                                    // (1) 버튼을 누르면 onRemovePost 함수가 작동
+                                </>
+                            ) : <Button>신고</Button>}
+                        </Button.Group>
+                ]}
+                >
+```
+1. onClick의 onRemovePost 함수가 실행되며 REMOVE_POST_REQUEST 액션이 dispatch 되고 post.id가 올라가게 된다.
+
+2. reducers/post.js와 sagas/post.js에 dispatch된 REMOVE_POST_REQUEST 액션이 전달되어 해당 기능이 실행된다.      
+reducers/post.js
+```javascript
+const reducer = (state = initialState, action) => {
+    switch (action.type) {
+        ...
+        case REMOVE_POST_REQUEST:
+            return {
+                ...state,
+                removePostLoading: true,
+                removePostDone: false,
+                removePostError: null,
+            }
+        ...
+    }
+}
+```
+REMOVE_POST_REQUEST를 받으면 return 안의 사항을 실행함      
+
+sagas/post.js       
+```javascript
+function* removePost(action) {
+    try {
+        // const result = yield call(removePostAPI, action.data);
+        yield delay(1000);
+        yield put({ // post reducer 조작
+            type: REMOVE_POST_SUCCESS,
+            data: action.data, // action.data에 어떤 게시물을 지웠는지 id가 들어있음
+        });
+        // 한번에 user와 post를 조작할 수 없으므로 action을 두가지로 나눠서 진행한다.
+        yield put({ // user reducer 조작 
+            type: REMOVE_POST_OF_ME,
+            data: action.data,
+        })
+    } catch (err) {
+        yield put({
+            type: REMOVE_POST_FAILURE,
+            data: err.response.data,
+        })
+    }
+}
+
+function* watchRemovePost() {
+    yield takeLatest(REMOVE_POST_REQUEST, removePost);
+} // (1) 여기서 이벤트 리스너 같이 action이 들어오면 동작함
+```
+saga에서 REMOVE_POST_REQUEST action을 받아서 removePost 제네레이터를 실행한다.      
+이때 REMOVE_POST_SUCCESS와 REMOVE_POST_OF_ME를 한번에 올릴 수 없기 때문에 따로 나눠서 작성해준다.
+REMOVE_POST_SUCCESS => 삭제가 올바르게 수행됨       
+REMOVE_POST_OF_ME => 유저 데이터에서 게시물 기록을 삭제함       
+
+3. REMOVE_POST_SUCCESS를 reducer에서 받으면 찾아서 지워줌
+```javascript
+case REMOVE_POST_SUCCESS:
+    return {
+        ...state,
+        // 추가 되는 게시물을 앞에 입력해야 최상단에 위치함
+        mainPosts: state.mainPosts.filter((v) => v.id !== action.data),
+        removePostLoading: false,
+        removePostDone: true,
+    }
+```            
+filter를 통해서 삭제함      
+
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 immer 라이브러리
+---
+불변성을 지키는데 복잡한 코드를 쓰는걸 막아줌       
+```
+npm i immer
+```
+reducers/post.js        
+```javascript
+import produce from "immer";
+...
+const reducer = (state = initialState, action) => {
+    return produce(state, (draft) => { // 이 부분을 넣어줘서 state를 draft로 사용할 수 있게된다.
+        // 즉 prevState 대신에 draft를 사용해서 불변선을 유지할 수 있게 된다.
+        switch (action.type) {
+            case ADD_POST_REQUEST:
+                    draft.addPostLoading = true; // spread를 사용하지 않고 쓸 수 있게 됨
+                    draft.addPostDone = false;
+                    draft.addPostError = null;
+                    break;
+                // return {
+                //     ...state,
+                //     addPostLoading: true,
+                //     addPostDone: false,
+                //     addPostError: null,
+                // }
+        }
+    }
+    })
+```
+이렇게 보면 크게 변한 것이 없게 보이지만 다음과 같은 상황에서는 코드 줄을 크게 줄일 수 있다.        
+```javascript
+case ADD_COMMENT_SUCCESS: {
+    const post = draft.mainPosts.find((v) => v.id === action.data.postId);// 원하는 post를 찾아서
+    post.Comments.unshift(dummyComment(action.data.content)); // 제일 앞에 게시글을 추가
+    draft.addCommentLoading = false;
+    draft.addCommentDone = true;
+    break;
+    // const postIndex = state.mainPosts.findIndex((v) => v.id === action.data.postId);
+    // const post = { ...state.mainPosts[postIndex] };
+    // post.Comments = [dummyComment(action.data.content), ...post.Comments];
+    // const mainPosts = [...state.mainPosts];
+    // mainPosts[postIndex] = post;
+    // return {
+    //     ...state,
+    //     mainPosts,
+    //     addCommentLoading: false,
+    //     addCommentDone: true,
+    // }
+}
+```
+원하는 포스터의 id를 찾아서 unshift를 사용해서 새로운 게시물을 제일 앞쪽에 추가해주기만 하면 된다.      
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
