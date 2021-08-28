@@ -7,7 +7,7 @@ tags: til
 comments: false
 ---
 
-# 🌟 공부할 거리
+# 📝 공부할 거리
 ---
 - unshift     
     ```javascript

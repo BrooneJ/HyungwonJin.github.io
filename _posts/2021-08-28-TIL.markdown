@@ -1,0 +1,420 @@
+---
+layout: post
+title: "210828-TIL(css)"
+subtitle: "TIL-210828"
+categories: til
+tags: til
+comments: false
+---
+
+# 📝 공부할 거리
+---
+1. react-virtualized에 대해서: 화면에 보이는 정도의 게시물만 남기고 나머지는 화면에서 지우고 메모리에 넣는 기술           
+<https://github.com/bvaughn/react-virtualized>      
+
+2. concat       
+```javascript
+const array1 = ['a', 'b', 'c'];
+const array2 = ['d', 'e', 'f'];
+const array3 = array1.concat(array2);
+
+console.log(array3);
+// expected output: Array ["a", "b", "c", "d", "e", "f"]
+```     
+
+3. useEffect()에서 addEventListener를 한 뒤 return () => {removeEventListener}을 해주어야하는 이유?     
+해주지 않으면 계속 메모리에 쌓여서 장해를 일으킴
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 viewport
+---
+```html
+<meta name="viewport" content="width=deice-width, initial-scale=1, minimum=1, maximum-scale=1, user-scalable=no">
+```
+width => 뷰포트의 너비 설정     
+initial-scale => 초기 배율 설정     
+minimum-scale => 최소 축소 비율 설정        
+maximum-scale => 최대 확대 비율 설정        
+user-scalable => 확대/축소 여부 설정        
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 반응형 웹 기기 사이즈
+---
+모바일 => 320px     
+테블릿 => 768px     
+PC용 => 960px or 1024px     
+
+```css
+/* 모바일용 CSS */
+...
+
+/* 태블릿용 CSS */
+@media all and (min-width: 768px) {
+    ...
+}
+
+/* PC용 CSS */
+@media all and (min-width: 960px){
+    ...
+}
+```
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 faker Library
+---
+<https://www.npmjs.com/package/faker>   
+많은 샘플을 직접 입력할 수 없기 때문에 faker 라이브러리를 사용해서 테스트를 해보았다.           
+```
+npm i faker
+```
+
+🗂 reducers/post.js        
+```javascript
+initialState.mainPosts = initialState.mainPosts.concat(
+    Array(20).fill().map(() => ({
+        id: shortId.generate(),
+        User: {
+            id: shortId.generate(),
+            nickname: faker.name.findName(),
+        },
+        content: faker.lorem.paragraph(),
+        Images: [{
+            src: faker.image.image(),
+        }],
+        Comments: [{
+            User: {
+                id: shortId.generate(),
+                nickname: faker.name.findName(),
+            },
+            content: faker.lorem.sentence(),
+        }],
+    })),
+)
+```
+![1-1](/assets/img/web/2021-08-28/1-1.png)  
+위의 사진과 같은 fake 화면이 나타남
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 infinite scroll
+---
+무한 스크롤이 가능하게 되면 사용자들도 더 편리함을 느낌     
+
+🗂 reducers/post.js        
+```javascript
+export const initialState = {
+    ...
+    hasMorePost: true, // 더 불러올 게시물이 있는지 확인
+
+    // 상태 변수
+    loadPostLoading: false,
+    loadPostDone: false,
+    loadPostError: null,
+    ...
+}
+
+export const LOAD_POST_REQUEST = 'LOAD_POST_REQUEST';
+export const LOAD_POST_SUCCESS = 'LOAD_POST_SUCCESS';
+export const LOAD_POST_FAILURE = 'LOAD_POST_FAILURE';
+
+const reducer = (state = initialState, action) => {
+    return produce(state, (draft) => { 
+        switch (action.type) {
+            case LOAD_POST_REQUEST:
+                draft.loadPostLoading = true;
+                draft.loadPostDone = false;
+                draft.loadPostError = null;
+                break;
+
+            case LOAD_POST_SUCCESS:
+                draft.loadPostLoading = false;
+                draft.loadPostDone = true;
+                draft.mainPosts = action.data.concat(draft.mainPosts); // mainPosts에 추가되는 게시물을 이어붙임
+                draft.hasMorePost = draft.mainPosts.length < 50; // 덧붙인 길이가 50을 넘는가?
+                break;
+
+            case LOAD_POST_FAILURE:
+                draft.loadPostLoading = false;
+                draft.loadPostError = action.error;
+                break;
+            ...
+        }
+    }
+}
+```     
+
+🗂 sagas/post.js       
+```javascript
+import {
+    ...
+    LOAD_POST_REQUEST,
+    LOAD_POST_SUCCESS,
+    LOAD_POST_FAILURE,
+    generateDummyPost,
+} from '../reducers/post';
+
+unction loadPostAPI(data) { // 제네레이터 아님
+    return axios.get('/api/post', data);
+}
+
+function* loadPost(action) {
+    try {
+        // const result = yield call(loadPostAPI, action.data);
+        yield delay(1000);
+        yield put({
+            type: LOAD_POST_SUCCESS,
+            data: generateDummyPost(10), // 더미 데이터 10개 만들어서 보냄
+        });
+    } catch (err) {
+        yield put({
+            type: LOAD_POST_FAILURE,
+            data: err.response.data,
+        })
+    }
+}
+
+function* watchloadPost() {
+    yield throttle(5000, LOAD_POST_REQUEST, loadPost);
+}
+
+export default function* postSaga() {
+    yield all([
+        fork(watchAddPost),
+        fork(watchloadPost),
+        fork(watchRemovePost),
+        fork(watchAddComment),
+    ])
+}
+```     
+
+🗂 pages/index.js       
+```javascript
+const Home = () => {
+    const dispatch = useDispatch();
+    const { mainPosts, hasMorePost, loadPostLoading } = useSelector((state) => state.post);
+
+    useEffect(() => {
+        dispatch({
+            type: LOAD_POST_REQUEST,
+        });
+    }, []);
+
+    useEffect(() => {
+        function onScroll() {
+            console.log(window.scrollY, document.documentElement.clientHeight, document.documentElement.scrollHeight);
+            // scrollY: 얼마나 내렸는지, clientHeight: 화면 보이는 길이, scrollHeight: 총 길이
+            if (window.scrollY + document.documentElement.clientHeight > document.documentElement.scrollHeight - 300) {
+                // 최하단으로 부터 300픽셀 떨어진 곳에 도달하면 다음 게시물을 불러옴
+                if (hasMorePost && !loadPostLoading) {
+                    // 다음 게시물이 있고 현재 다음 게시물을 불러오고 있지 않으면 dispatch를 실행함
+                    dispatch({
+                        type: LOAD_POST_REQUEST,
+                    });
+                }
+            }
+        }
+        window.addEventListener('scroll', onScroll);
+        return () => {
+            window.removeEventListener('scroll', onScroll); // removeEventListener해주지 않으면 메모리에 쌓여서 없애주어여함
+        }
+    }, [hasMorePost, loadPostLoading])
+}
+```
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 follow & unfollow
+---
+팔로우, 언팔로우 기능       
+<br />
+
+
+🗂 components/PostCard.js       
+```javascript
+<Card
+    cover={post.Images[0] && <PostImages images={post.Images} />}
+    actions={[
+        ...
+    ]}
+->  extra={id && <FollowButton post={post} />}
+    >
+```
+id를 넣어줘서 로그인 한 경우에만 팔로우 버튼이 보이도록 한다.       
+<br/>
+
+🗂 components/FollowButton.js       
+```javascript
+import React, { useCallback } from 'react';
+import { Button } from 'antd';
+import PropTypes from 'prop-types';
+import { useDispatch, useSelector } from 'react-redux';
+import { FOLLOW_REQUEST, UNFOLLOW_REQUEST } from '../reducers/user';
+
+const FollowButton = ({ post }) => {
+    const dispatch = useDispatch();
+    const { me, followLoading, unfollowLoading } = useSelector((state) => state.user);
+    // 내 정보와 loading 상태를 불러옴
+    const isFollowing = me?.Followings.find((v) => v.id === post.User.id);
+    // me?.Followings => me && me.Followings
+    // 내 팔로우 목록에 있는지 확인
+
+    const onClickButton = useCallback(() => {
+        if (isFollowing) { // 목록에 있다면 언팔로우
+            dispatch({
+                type: UNFOLLOW_REQUEST,
+                data: post.User.id,
+            })
+        } else { // 없다면 팔로우
+            dispatch({
+                type: FOLLOW_REQUEST,
+                data: post.User.id,
+            })
+        }
+
+    }, [isFollowing])
+
+    return (
+        <Button loading={followLoading || unfollowLoading} onClick={onClickButton}>
+            {isFollowing ? '언팔로우' : '팔로우'}
+        </Button>
+    )
+};
+
+FollowButton.propTypes = {
+    post: PropTypes.object.isRequired,
+};
+
+export default FollowButton;
+```
+
+🗂 reducers/user.js        
+```javascript
+export const initialState = {
+    followLoading: false, // 팔로우 시도 중
+    followDone: false,
+    followError: null,
+
+    unfollowLoading: false, // 언팔로우 시도 중
+    unfollowDone: false,
+    unfollowError: null,
+    ...
+}
+
+export const FOLLOW_REQUEST = 'FOLLOW_REQUEST';
+export const FOLLOW_SUCCESS = 'FOLLOW_SUCCESS';
+export const FOLLOW_FAILURE = 'FOLLOW_FAILURE';
+
+export const UNFOLLOW_REQUEST = 'UNFOLLOW_REQUEST';
+export const UNFOLLOW_SUCCESS = 'UNFOLLOW_SUCCESS';
+export const UNFOLLOW_FAILURE = 'UNFOLLOW_FAILURE';
+
+const reducer = (state = initialState, action) => {
+    return produce(state, (draft) => {
+        switch (action.type) {
+            case FOLLOW_REQUEST:
+                draft.followLoading = true;
+                draft.followError = null;
+                draft.followDone = false;
+                break;
+
+            case FOLLOW_SUCCESS:
+                draft.followLoading = false;
+                draft.followDone = true;
+                draft.me.Followings.push({ id: action.data });
+                // 팔로우 성공하면 Followings에 id를 집어 넣음
+                break;
+
+            case FOLLOW_FAILURE:
+                draft.followLoading = false;
+                draft.followError = action.error;
+                break;
+
+            case UNFOLLOW_REQUEST:
+                draft.unfollowLoading = true;
+                draft.unfollowError = null;
+                draft.unfollowDone = false;
+                break;
+
+            case UNFOLLOW_SUCCESS:
+                draft.unfollowLoading = false;
+                draft.unfollowDone = true;
+                draft.me.Followings = draft.me.Followings.filter((v) => v.id !== action.data);
+                // 언팔하면 목록에서 언팔 한 유저만 빼고 배열 생성
+                break;
+
+            case UNFOLLOW_FAILURE:
+                draft.unfollowLoading = false;
+                draft.unfollowError = action.error;
+                break;
+            
+            ...
+        }
+    }
+}
+```
+
+🗂 sagas/user.js
+```javascript
+function followAPI(data) {
+    return axios.post('/api/follow', data);
+}
+
+function* follow(action) {
+    try {
+        yield delay(1000);
+        yield put({
+            type: FOLLOW_SUCCESS,
+            data: action.data,
+        })
+    } catch (err) {
+        yield put({
+            type: FOLLOW_FAILURE,
+            error: err.response.data,
+        })
+    }
+}
+
+function unfollowAPI(data) {
+    return axios.post('/api/unfollow', data);
+}
+
+function* unfollow(action) {
+    try {
+        yield delay(1000);
+        yield put({
+            type: UNFOLLOW_SUCCESS,
+            data: action.data,
+        })
+    } catch (err) {
+        yield put({
+            type: UNFOLLOW_FAILURE,
+            error: err.response.data,
+        })
+    }
+}
+function* watchFollow() {
+    yield takeLatest(FOLLOW_REQUEST, follow);
+}
+
+function* watchUnFollow() {
+    yield takeLatest(UNFOLLOW_REQUEST, unfollow);
+}
+export default function* userSaga() {
+    yield all([
+        fork(watchFollow),
+        fork(watchUnFollow),
+        ...
+    ])
+}
+```
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰ 
