@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "210828-TIL(css)"
+title: "210828-TIL(css, redux-sagas)"
 subtitle: "TIL-210828"
 categories: til
 tags: til

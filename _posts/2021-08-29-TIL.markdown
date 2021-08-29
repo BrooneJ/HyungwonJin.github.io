@@ -1,0 +1,204 @@
+---
+layout: post
+title: "210829-TIL(node.js, MySQL)"
+subtitle: "TIL-210829"
+categories: til
+tags: til
+comments: false
+---
+
+# 📝 공부할 거리
+---
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 app 종류
+---
+```javascript
+app.get() -> 가져오기
+app.post() -> 더이터 생성하기
+app.put() -> 전체 수정
+app.delete() -> 제거하기
+app.patch() -> 부분 수정
+app.options() -> 찔러보기
+app.head() -> 헤더만 가져로기
+```
+
+# MySQL
+---
+
+## ❗️  MySQL 중간에 비밀번호를 잘못입력했거나 잊어버렸을 때 초기화 및 재설정하는 방법
+---
+출처:<https://velog.io/@nari120/MySQL8-%EB%B9%84%EB%B0%80%EB%B2%88%ED%98%B8-%EB%B6%84%EC%8B%A4-%EB%B0%8F-%EB%B3%80%EA%B2%BD>        
+1. MySQL 서버 멈추기
+```
+cd /opt/homebrew/opt/mysql/bin
+brew services stop mysql
+```
+2. MySQL 서버 시작
+비밀번호 없이 MySQL에 접속하기 위해서 서버 승인 생략한다.
+```
+mysql.server start --skip-grant-tables
+```
+3. root 유저로 MySQL에 접속
+아래 명령문만 입력해도 비밀번호 입력 없이 시작된다.
+```
+mysql -u root
+```
+4. mysql 데이터베이스에 접근
+```
+use mysql;
+```
+5. 권한 변경
+```
+FLUSH PRIVILEGES;
+```
+6. 비밀번호 변경
+```
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'pass';
+```
+>✅ 여기서 패스워드 정책에 따라 비밀번호 설정이 막힐 수 있음     
+>출처: <https://kamang-it.tistory.com/entry/MySQL%ED%8C%A8%EC%8A%A4%EC%9B%8C%EB%93%9C-%EC%A0%95%EC%B1%85-%ED%99%95%EC%9D%B8-%EB%B3%80%EA%B2%BD%ED%95%98%EA%B8%B0>
+>```
+>SHOW VARIABLES LIKE 'validate_password%'
+>```
+>자신이 설정한 or 임의로 설정된 정책을 확인할 수 있다.       
+>```
+>SET GLOBAL validate_password_policy=LOW; <- MEDIUM으로 변경도 가능
+>```
+>이 명령어로 비밀번호 정책을 바꿀 수 있다.(라고 하는데 내가 할 땐 안됐음...)     
+>여튼 정책을 준수한 비밀번호를 설정해준다.
+
+7. mysql을 끔.
+```
+EXIT;
+```
+8. MySQL 서버 멈추기
+비밀번호 없이 들어가기 위해서 처음 시작 때, 걸었던 --skip-grant-tables 옵션이 들어간 MySQL 서버 멈추기
+```
+mysql.server stop
+```
+9. MySQL 서버 시작
+```
+mysql.server start
+```
+10. mysql에 다시 접속
+위에서 세팅한 비밀번호를 입력해보면 짜잔. 된다!
+```
+mysql -u root -p
+```
+
+## 🌟 MySQL 사용하기
+---
+MySQL을 사용하기 위해서 다음 명령어를 입력한다.     
+```
+$ brew install mysql
+$ brew services start mysql
+$ mysql_secure_installation
+```
+```
+npm i sequelize sequelize-cli mysql2
+```
+mysql2는 node와 MySQL을 이어주는 도구       
+sequelize는 자바스트립트로 MySQL을 조작할 수 있게 해주는 도구       
+
+🗂 config/config.json       
+```javascript
+{
+  "development": {
+    "username": "root",
+    "password": "비밀번호",
+    "database": "react-nodebird",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "react-nodebird",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "react-nodebird",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
+```
+🗂 models/index.js      
+```javascript
+const Sequelize = require('sequelize');
+const env = process.env.NODE_ENV || 'development'; 
+// 배포할 때는 process.env.NODE_ENV 대신 production을 씀
+const config = require('../config/config')[env];
+// config.json에서 "development"를 불러옴
+const db = {};
+
+const sequelize = new Sequelize(config.database, config.username, config.password, config);
+// 시퀄라이즈가 node랑 MySQL을 연결해줌
+
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
+
+db.sequelize = sequelize;
+db.Sequelize = Sequelize;
+
+module.exports = db;
+```
+
+## 🌟 Model 만들기
+---
+models 안에 필요한 모델들을 만들어준다.     
+현재 서비스를 만들기 위해서는 user, post, image, comment, hashtag가 필요해서 만들어주었다.      
+<br/>
+
+🗂 models/user.js  
+```javascript
+module.exports = (sequelize, DataTypes) => {
+    const User = sequelize.define('User', { // MySQL user 테이블 생성
+        // MySQL에서 만들어주는 기본 id가 있다.
+        email: {
+            type: DataTypes.STRING(30),
+            allowNull: false, // false이면 필수
+            uniqe: true,
+        },
+        nickname: {
+            type: DataTypes.STRING(30),
+            allowNull: false,
+        },
+        password: {
+            type: DataTypes.STRING(100),
+            allowNull: false,
+        },
+    }, {
+        charset: 'utf8',
+        collate: 'utf8_general_ci', // 한글 저장
+    });
+    User.associate = (db) => { };
+    return User;
+}
+```
+다른 모델들도 위와 비슷하게 만들어준다.
+DataTypes에는 STRING, TEXT, BOOLEAN, FLOAT 등 다양한 타입이 있다.       
+
+그리고 내용에서 한글을 쓰고 싶을 때는       
+```javascript
+{
+    charset: 'utf8',
+    collate: 'utf8_general_ci', // 한글 저장
+}
+```
+이모티콘까지 필요할 때는 mb4를 추가해서 utf8mb4라고 적어준다.              
+```javascript
+{
+    charset: 'utf8mb4', // mb4는 이모티콘
+    collate: 'utf8bm4_general_ci', // 한글 저장
+}
+```
