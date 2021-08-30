@@ -40,6 +40,7 @@ https://code.tutsplus.com/ko/tutorials/the-30-css-selectors-you-must-memorize--n
    
   - text-orientation: upright; 새로로 표기됨
 - white-space: nowrap; 윈도우의 사이즈가 바뀌면 자동으로 text의 줄이 바뀌는 것을 막아줌
+- word-break:break-all; 글자가 div 박스 밖으로 넘어가면 자동으로 줄바꿈을 해줌.
 
 ### Text 테크닉
 ---

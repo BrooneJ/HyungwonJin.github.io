@@ -13,6 +13,7 @@ comments: false
 <https://github.com/bvaughn/react-virtualized>      
 
 2. concat       
+
 ```javascript
 const array1 = ['a', 'b', 'c'];
 const array2 = ['d', 'e', 'f'];
@@ -23,7 +24,7 @@ console.log(array3);
 ```     
 
 3. useEffect()에서 addEventListener를 한 뒤 return () => {removeEventListener}을 해주어야하는 이유?     
-해주지 않으면 계속 메모리에 쌓여서 장해를 일으킴
+해주지 않으면 계속 메모리에 쌓여서 장해를 일으킴        
 
 ⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
 <br/>
