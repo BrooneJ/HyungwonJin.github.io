@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "210830-TIL(css)"
+title: "210830-TIL(css, mysql)"
 subtitle: "TIL-210830"
 categories: til
 tags: til

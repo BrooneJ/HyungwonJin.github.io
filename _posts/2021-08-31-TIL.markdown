@@ -1,0 +1,283 @@
+---
+layout: post
+title: "210831-TIL(MySQL)"
+subtitle: "TIL-210831"
+categories: til
+tags: til
+comments: false
+---
+
+
+# 📝 공부할 거리
+---
+CORS란?     
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 MySQL과 redux 연결
+---
+이제 설정한 database와 redux를 연결해주어야한다.        
+<br/>
+
+user를 등록하는 것을 예로 들어보자          
+<br/>    
+
+1. front의 pages/signup.js에서 회원가입 버튼을 누르면      
+    ```javascript
+    const onSubmit = useCallback(() => {
+        ...
+        dispatch({
+            type: SIGN_UP_REQUEST,
+            data: { email, password, nickname },
+        })
+    },[password, passwordCheck, term])
+    ```
+    위의 코드가 작동하게 된다.      
+    <br/>
+
+2. 따라서 action과 함께 action.data인 { email, password, nickname }가 redux와 redux-saga로 전달되고     
+    🗂 sagas/user.js
+    ```javascript
+    function signUpAPI(data) { // 제네레이터 아님
+        return axios.post('http://localhost:3065/user', data);
+    }
+
+    function* signUp(action) {
+        try {
+            const result = yield call(signUpAPI, action.data);
+            console.log(result);
+            yield delay(1000);
+            yield put({
+                type: SIGN_UP_SUCCESS,
+            })
+        } catch (err) {
+            yield put({
+                type: SIGN_UP_FAILURE,
+                error: err.response.data,
+            })
+        }
+    }
+    function* watchSignUp() {
+        yield takeLatest(SIGN_UP_REQUEST, signUp);
+    }
+    ```
+3. watchSignUp에서 action을 받아 signUp 제네레이터를 부른다.       
+signUp 제네레이터는 action을 받아서 그 안의 data를 받을 수 있다.        
+그리고 그 데이터를 signUpAPI에 가져가서 http://localhost:3065/user이라는 주소를 가진 백엔드로 전달한다.
+
+4.  백엔드의 app.js는 다음과 같은 구조를 가지고 있다.     
+    🗂 app.js
+    ```javascript
+    const express = require('express');
+    const userRouter = require('./routes/user');
+    const db = require('./models');
+    const app = express();
+    db.sequelize.sync()
+        .then(() => {
+            console.log('db 연결 성공');
+        })
+        .catch(console.error);
+
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true })); // body-parser
+    app.use('/user', userRouter); 
+    app.listen(3065, () => {
+        console.log('서버 실행 중')
+    });
+    ```
+    '/user'로 받은 data는 미들웨어에 의해서 해석되고(body를 읽을 수 있게 됨) ./routes/user로 보내진다.      
+
+5. userRouter는 다음과 같은 구조를 가지고 있다.     
+    🗂 routes/user.js
+    ```javascript
+    const express = require('express');
+    const bcrypt = require('bcrypt');
+    const { User } = require('../models');
+
+    const router = express.Router();
+
+    router.post('/', async (req, res, next) => {
+        const { email, nickname, password } = req.body;
+        try {
+            const exUser = await User.findOne({
+                where: {
+                    email,
+                }
+            });
+            if (exUser) {
+                return res.status(403).send('이미 사용중인 이메일 입니다.');
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await User.create({
+                email,
+                nickname,
+                password: hashedPassword,
+            });
+            res.send('ok');
+        } catch (error) {
+            console.error(error);
+            next(error);
+        }
+    });
+
+    module.exports = router;
+    ```
+    위 코드에는 사용중인 이메일을 체크하는 기능과 bcrypt를 통해서 비밀번호를 암호화하는 과정을 추가해주었다.
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🌋🏝⛰        
+<br/>
+
+## 🌟 CORS error (No 'Access-Control-Allow-Origin')
+---
+
+🚔 문제 발견        
+signup 페이지에서 회원가입을 하면 다음과 같은 에러를 마주하게 된다.     
+![1-1](/assets/img/web/2021-08-31/1-5.png)          
+(OPTION는 Access-Control-Allow-Origin가 있는지 확인하는 기능)
+이 문제는 CORS 에러로 브라우저인 localhost:3000 포트에서 백엔드인 localhost:3065/user로 보낼때 포트넘버가 다르기 때문에 브라우저에서 차단하기 때문에 일어나는 에러이다.   
+알아두어야 할 사항은 브라우저에서 백엔드로 갈 때에만 에러가 발생한다. 서버에서 서버로 갈 떄는 문제 발생하지 않음    
+
+🔍 해결 방법    
+이를 해결하기 위해서는 두가지 방식이 있다.      
+첫번째는 proxy 방식이 있다. 프록시 방식은 브라우저와 프론트 서버의 포트넘버가 같은 것을 이용하는 방법으로 브라우저에서 프론트 서버로 데이터를 보낸 후 프론트 서버에서 백엔트 서버로 데이터를 전송하는 방법이다.       
+두번째는 헤더에 Access-Control-Allow-Origin을 붙여서 해결하는 방법이 있다.      
+```
+res.setHeader("Access-Control-Allow-Origin", *);
+```
+간단하게 하는 방법은 cors 미들웨어로 처리할 수 있다.        
+```
+npm i cors
+```
+app.js      
+```javascript
+const cors = require('cors');
+app.use(cors({
+    origin: '*',
+}));
+```
+cors 미들웨어를 사용하기 전
+![1-1](/assets/img/web/2021-08-31/1-6.png)     
+<br/>       
+
+cors 미들웨어를 사용한 후       
+![1-1](/assets/img/web/2021-08-31/1-7.png)      
+Access-Control-Allow-Origin이 제대로 설정되어 Status Code 200을 받았다.     
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🌋🏝⛰        
+<br/>
+
+## 🌟 baseURL 만들기
+---
+🗂 sagas/index.js    
+```javascript
+import axios from "axios";
+axios.defaults.baseURL = 'http://localhost:3065';
+```
+위와 같이 baseURL을 만들면 sagas에 있는 다른 파일에서 local주소를 입력하지 않고 사용할 수 있다.  
+예를 들어 sagas/user.js에서        
+```javascript
+function logInAPI(data) { // (3) call을 해서 받은 logInAPI(action.data)임
+    return axios.post('http://localhost:3065/user/login', data);
+}
+                    |
+                    V
+function logInAPI(data) { 
+    return axios.post('/user/login', data);
+}
+```
+이렇게 로컬주소를 쓰지 않고 쓸 수 있다.     
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🌋🏝⛰        
+<br/>
+
+## 🌟 passport 사용해서 로그인 하기
+---
+우선 passport를 설치한다.       
+```
+npm i passport
+```
+기본 세팅       
+
+app.js에서 passport를 불러온다.
+```javascript
+const passportConfig = require('./passport'); // require('passport')가 아님을 주의      
+passportConfig();
+```
+
+🗂 passport/index.js       
+```javascript
+const passport = require('passport');
+const local = require('./local');
+
+module.exports = () => {
+    passport.serializeUser(() => {
+
+    });
+
+    passport.deserializeUser(() => {
+
+    });
+
+    local();
+```
+마지막에 적은 local은 아래 코드를 불러옴        
+
+🗂 passport/local.js  
+```javascript
+const passport = require('passport');
+const { Strategy: LocalStrategy } = require('passport-local');
+// 로컬 로그인 전략
+const { User } = require('../models');
+
+module.exports = () => {
+    passport.use(new LocalStrategy({
+        usernameField: 'email',
+        passwordField: 'password',
+    }, async (email, password, done) => {
+        try {
+            const user = await User.findOne({
+                where: { email }
+            })
+            if (!user) {
+                return done(null, false, { reason: '존재하지 않는 사용자입니다.' })
+                // done은 callback이랑 비슷한 것
+                // done(서버 에러, 성공, 클라이언트 에러=보내는 측에서 잘못 보냈을때(ex.존재하지 않는 사용자))
+            }
+            const result = await bcrypt.compare(password, user.password);
+            if (result) {
+                return done(null, user);
+            }
+            return done(null, false, { reason: '비밀번호가 틀렸습니다.' });
+        } catch (error) {
+            console.error(error);
+            return done(error);
+        }
+    }));
+```
+위와 같이 passport/ index와 local을 설정하고        
+아래와 같이 authenticate을 설정하면 login을 실행할때 
+LocalStrategy가 실행된다.       
+
+🗂 routes/user.js
+```javascript
+const passport = require('passport');
+router.post('/login', (req, res, next) => { // 미들웨어 확장
+    passport.authenticate('local', (err, user, info) => {
+        if (err) {
+            console.error(err);
+            return next(error);
+        }
+        if (info) {
+            return res.status(401).send(info.reason);
+        }
+        return req.login(user, async (loginErr) => {
+            if (loginErr) {
+                console.error(loginErr);
+                return next(loginErr);
+            }
+            return res.json(user);
+        })
+    })(req, res, next);
+});
+```
