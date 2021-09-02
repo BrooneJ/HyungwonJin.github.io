@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "[PUG] PUG textarea placeholder 안나타나는 문제"
+title:  "[TroubleShooting] PUG) textarea placeholder 안나타나는 문제"
 subtitle:   "PUG textarea placeholder"
 categories: develop
 tags: front

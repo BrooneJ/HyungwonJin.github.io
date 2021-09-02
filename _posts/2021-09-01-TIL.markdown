@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "210901-TIL(MySQL)"
+title: "210901-TIL(passport, React)"
 subtitle: "TIL-210901"
 categories: til
 tags: til

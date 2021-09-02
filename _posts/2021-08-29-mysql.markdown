@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "[MySQL] root 비밀번호 초기화 & 재설정, 실행"
+title:  "[TroubleShooting] MySQL) root 비밀번호 초기화 & 재설정, 실행"
 subtitle:   "Mysql password setting"
 categories: develop
 tags: back mysql 
