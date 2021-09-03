@@ -1,0 +1,184 @@
+---
+layout: post
+title: "210902-TIL(React)"
+subtitle: "TIL-210902"
+categories: til
+tags: til
+comments: false
+---
+
+# 📝 공부할 거리
+---
+
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 like & unlike 기능 흐름 순서
+---
+1. 프론트엔드에서 like 버튼을 누름      
+
+🗂 front/component/PostCard.js      
+```javascript
+const PostCard = ({ post }) => {
+    const onLike = useCallback(() => {
+            dispatch({
+                type: LIKE_POST_REQUEST,
+                data: post.id,
+            })
+        }, []);
+        const onUnLike = useCallback(() => {
+            dispatch({
+                type: UNLIKE_POST_REQUEST,
+                data: post.id,
+            })
+        }, []);
+    const id = useSelector((state) => state.user.me?.id);
+    const liked = post.Likers.find((v) => v.id === id); 
+    // 현재 로그인한 유저가 포스트에 like를 한 유저인 지 찾는다.
+    return (
+        <Card
+        actions={[
+        liked
+            ? <HeartTwoTone twoToneColor="#eb2f96" key="heart" onClick={onUnLike} />
+            // like를 했다면 빨간 하트와 unlike가 가능하도록 
+            : <HeartOutlined key="heart" onClick={onLike} />,
+            // 하지 않았다면 like를 할 수 있도록 구성       
+        ]}
+        >
+```
+버튼을 누르면 onLike가 dispatch되면서 LIKE_POST_REQUEST 액션을 보내게 된다. 이때 게시물 id도 같이보냄       
+
+2. 액션은 redux로 들어가서      
+🗂 reducers/post.js     
+```javascript
+const reducer = (state = initialState, action) => {
+    return produce(state, (draft) => { // state가 이름이 draft로 바뀜
+        switch (action.type) {
+            case LIKE_POST_REQUEST:
+                draft.loadPostLoading = true;
+                draft.loadPostDone = false;
+                draft.loadPostError = null;
+                break;
+
+            case LIKE_POST_SUCCESS: {
+                const post = draft.mainPosts.find((v) => v.id === action.data.PostId);
+                // mainPosts에서 게시물의 id 중에서 현재 받은 PostId와 같은 게시물을 찾는다.
+                post.Likers.push({ id: action.data.UserId });
+                // 그 게시물의 Liker에 현재 로그인 한 UserId를 넣는다.
+                draft.loadPostLoading = false;
+                draft.loadPostDone = true;
+                break;
+            }
+            case LIKE_POST_FAILURE:
+                draft.loadPostLoading = false;
+                draft.loadPostError = action.error;
+                break;
+```                
+이 구성에 맞춰서 작동하게 된다.     
+현재 유저는 Like를 누른 유저로 상태가 바뀐다.       
+
+3. saga에서 액션을 빋아서 patch를 실행함        
+🗂 sagas/post.js       
+```javascript
+function likePostAPI(data) { // 제네레이터 아님
+    return axios.patch(`/post/${data}/like`);
+}
+
+function* likePost(action) {
+    try {
+        const result = yield call(likePostAPI, action.data);
+        yield put({
+            type: LIKE_POST_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        yield put({
+            type: LIKE_POST_FAILURE,
+            data: err.response.data,
+        })
+    }
+}
+```
+
+4. 백엔드는 다음과 같은 과정을 거친다.      
+🗂 routes/post.js       
+```javascript
+router.patch('/:postId/like', isLoggedIn, async (req, res, next) => { //PATCH /post/1/like
+    try {
+        const post = await Post.findOne({ where: { id: req.params.postId } });
+        // postId를 찾아서 post를 찾고
+        if (!post) {
+            return res.status(403).send('게시글이 존재하지 않습니다.');
+        }
+        await post.addLikers(req.user.id); 
+        // 데이터 베이스의 addLikers로 id를 넣어줌      
+        res.json({ PostId: post.id, UserId: req.user.id });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+})
+```
+이 과정을 거쳐서 백엔드에서 데이터 베이스까지 데이터를 넣어주는 과정을 완성한다.        
+
+5. 마지막으로 불러올 때도 Likers를 데이터베이스로부터 잘 불러와야한다.      
+🗂 routers/posts.js
+```javascript
+router.get('/', async (req, res, next) => {
+    try {
+        const posts = await Post.findAll({
+            limit: 10,
+            order: [
+                ['createdAt', 'DESC'],
+                [Comment, 'createdAt', 'DESC'],
+            ],
+            include: [{
+                model: User,
+                attributes: ['id', 'nickname'],
+            }, {
+                model: Image,
+            }, {
+                model: Comment,
+                include: [{
+                    model: User,
+                    attributes: ['id', 'nickname'],
+                }]
+            }, {
+                model: User,
+                as: 'Likers',
+                attributes: ['id'],
+            }],
+        });
+        // console.log(posts);
+        res.status(200).json(posts);
+```
+이 부분에서 
+```javscript
+{
+    model: User,
+    as: 'Likers',
+    attributes: ['id'],
+}
+```
+이 likers를 불러 오는 걸 넣어주지 않아서 몇시간을 헤맸는지 모른다...ㅜㅜ
+
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 useEffect 마지막에 [] 안넣으면 일어나는 일
+---
+![1-1](/assets/img/web/2021-09-03/1-1.png)          
+무한 request가 일어남...        
+조심하자
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 
+---
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
