@@ -1,0 +1,77 @@
+---
+layout: post
+title: "210904-TIL(React)"
+subtitle: "TIL-210904"
+categories: til
+tags: til
+comments: false
+---
+
+## 🌟 multer 
+---
+파일이나 비디오를 올릴 때는 multipart로 데이터가 올라가기 때문에 처리해 줄 미들웨어가 필요함        
+```
+npm i multer
+```
+
+🗂 front/components/PostForm.js     
+```javascript
+
+const onChangeImages = useCallback((e) => {
+    console.log('image', e.target.files);
+    const imageFormData = new FormData();
+    [].forEach.call(e.target.files, (f) => {
+        imageFormData.append('image', f); // 아래의 input
+    });
+    dispatch({
+        type: UPLOAD_IMAGES_REQUEST,
+        data: imageFormData,
+    })
+})
+rn (
+        <Form style={{ margin: '10px 0 20px' }} encType="multipart/form-data" onFinish={onSubmit}>
+        // 이 부분에서 multipartfmf 통해서 비디오, 사진을 처리함
+            <div>
+                <input type="file" name="image" multiple hidden ref={imageInput} onChange={onChangeImages} />
+                // name을 image로 설정해주어 각 단계에서 image를 인식할 수 있도록 한다.
+                <Button onClick={onClickImageUpload}>이미지 업로드</Button>
+                <Button type="primary" style={{ float: "right" }} htmlType="submit">짹짹</Button>
+            </div>
+        <Form/>
+)
+```
+multer는 app에 올려서 전체를 공통적인 폼으로 처리할 수도 있지만 각페이지 마다 만들어주는 것이 효율적이다. 왜냐하면 어떤 페이지에서는 이미지 데이터를 두장 올리고 어떤 페이지에선 한장만 올리고 어떤 페이지에서는 텍스트만 올릴 수도 있기 때문에 개별적으로 처리해주는 것이 좋다.        
+
+🗂 back/routes/post.js      
+```javascript
+const multer = require('multer');
+const path = require('path'); // node에서 제공      
+
+const upload = multer({
+    storage: multer.diskStorage({ // 현재는 AWS가 아닌 로컬에 저장함
+        destination(req, file, done) {
+            done(null, 'uploads');
+        },
+        filename(req, file, done) { // 파일명.png
+            const ext = path.extname(file.originalname); // 확장자 추출(.png)
+            const basename = path.basename(file.originalname, ext); // 파일명
+            done(null, basename + new Date().getTime() + ext); // 파일명3462346.png
+        },
+    }),
+    limits: { fileSize: 20 * 1024 * 1024 } // 20MB
+})
+router.post('/images', isLoggedIn, upload.array('image'), (req, res, next) => {
+    console.log(req.files);
+    req.json(req.files.map((v) => v.filename))
+})
+```
+
+🗂 front/reducer/post.js
+```javascript
+case UPLOAD_IMAGES_SUCCESS: {
+    draft.imagePaths = action.data;
+    draft.uploadImagesLoading = false;
+    draft.uploadImagesDone = true;
+    break;
+}
+```
