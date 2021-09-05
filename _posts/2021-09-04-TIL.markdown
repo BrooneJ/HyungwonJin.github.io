@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "210904-TIL(React)"
+title: "210904-TIL(multer)"
 subtitle: "TIL-210904"
 categories: til
 tags: til
@@ -28,16 +28,16 @@ const onChangeImages = useCallback((e) => {
         data: imageFormData,
     })
 })
-rn (
-        <Form style={{ margin: '10px 0 20px' }} encType="multipart/form-data" onFinish={onSubmit}>
-        // 이 부분에서 multipartfmf 통해서 비디오, 사진을 처리함
-            <div>
-                <input type="file" name="image" multiple hidden ref={imageInput} onChange={onChangeImages} />
-                // name을 image로 설정해주어 각 단계에서 image를 인식할 수 있도록 한다.
-                <Button onClick={onClickImageUpload}>이미지 업로드</Button>
-                <Button type="primary" style={{ float: "right" }} htmlType="submit">짹짹</Button>
-            </div>
-        <Form/>
+retrun (
+    <Form style={{ margin: '10px 0 20px' }} encType="multipart/form-data" onFinish={onSubmit}>
+    // 이 부분에서 multipartfmf 통해서 비디오, 사진을 처리함
+        <div>
+            <input type="file" name="image" multiple hidden ref={imageInput} onChange={onChangeImages} />
+            // name을 image로 설정해주어 각 단계에서 image를 인식할 수 있도록 한다.
+            <Button onClick={onClickImageUpload}>이미지 업로드</Button>
+            <Button type="primary" style={{ float: "right" }} htmlType="submit">짹짹</Button>
+        </div>
+    <Form/>
 )
 ```
 multer는 app에 올려서 전체를 공통적인 폼으로 처리할 수도 있지만 각페이지 마다 만들어주는 것이 효율적이다. 왜냐하면 어떤 페이지에서는 이미지 데이터를 두장 올리고 어떤 페이지에선 한장만 올리고 어떤 페이지에서는 텍스트만 올릴 수도 있기 때문에 개별적으로 처리해주는 것이 좋다.        

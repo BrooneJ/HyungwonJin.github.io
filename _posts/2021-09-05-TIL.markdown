@@ -1,0 +1,287 @@
+---
+layout: post
+title: "210904-TIL(multer)"
+subtitle: "TIL-210904"
+categories: til
+tags: til
+comments: false
+---
+
+
+## 🌟 multer로 올리고 백엔드에서 볼 수 있게 하는 방법
+---
+![1-1](/assets/img/web/2021-09-05/1-1.png)          
+현재는 위와 같이 백엔드의 uploads 파일에 올린 파일을 프론트엔드에서 읽어오지 못하고 있다.       
+따라서 다음과 같은 코드가 필요하다.     
+<br/>
+
+🗂 front/component/PostForm.js      
+```javascript
+const PostForm = () => {
+return (
+<Form style={{ margin: '10px 0 20px' }} encType="multipart/form-data" onFinish={onSubmit}>
+    <div>
+        {imagePaths.map((v, i) => (
+                    <div key={v} style={{ display: "inline-block " }}>
+                        <img src={`http://localhost:3065/${v}`} style={{ width: '200px ' }} alt={v} />
+                        // img에서 src를 가져올때 백엔드 주소로 지정해준다. 
+                        // 지정하지 않으면 'localhost:3000/파일명'으로 주소가 잡혀서 읽어오지 못한다.       
+                        ...
+                    </div>
+                ))}
+    </div>
+```
+
+이러한 현상은 게시물을 올린 후에도 일어나므로 postcard 부분도 똑같이 처리해 주어야한다.    
+즉, 백엔드에서 이미지를 가져오는 부분은 전부 '백엔드 주소'로 변경해주어야한다.      
+
+🗂 front/component/PostCard.js
+```javascript
+const PostImages = ({ images }) => {
+if (images.length === 1) {
+        return (
+            <>
+->              <img role="presentation" src={`http://localhost:3065/${images[0].src}`} alt={images[0].src} onClick={onZoom} />
+                {showImageZoom && <ImageZoom images={images} onClose={onClose} />}
+            </>
+        )
+    }
+    if (images.length === 2) {
+        return (
+            <>
+->              <img role="presentation" style={{ width: "50%", display: "inline-block" }} src={`http://localhost:3065/${images[0].src}`} alt={images[0].src} onClick={onZoom} />
+->              <img role="presentation" style={{ width: "50%", display: "inline-block" }} src={`http://localhost:3065/${images[1].src}`} alt={images[1].src} onClick={onZoom} />
+                {showImageZoom && <ImageZoom images={images} onClose={onClose} />}
+            </>
+        )
+    }
+    return (
+        <>
+            <div>
+->              <img role="presentation" width="50%" src={`http://localhost:3065/${images[0].src}`} alt={images[0].src} onClick={onZoom} />
+</div>
+</>
+)
+}
+```
+![1-1](/assets/img/web/2021-09-05/1-2.png)          
+![1-1](/assets/img/web/2021-09-05/1-3.png)          
+백엔드 주소로 바꿔주면 고양이 사진을 받아올 수 있게 된다.
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 사진을 여러개 올리는 방법
+---
+multer를 사용하면 사진을 한개는 물론 여러개의 사진을 동시에 올릴 수 있다.       
+
+🗂 back/app.js      
+```javascript
+const path = require('path');
+
+app.use('/', express.static(path.join(__dirname, 'uploads')))
+// 경로를 감출 수 있다는 이점이 있음.
+```
+
+🗂 back/routes/post.js
+```javascript
+router.post('/', isLoggedIn, upload.none(), async (req, res, next) => {
+    try {
+        const post = await Post.create({
+            content: req.body.content,
+            UserId: req.user.id,
+        })
+        if (req.body.image) {
+            if (Array.isArray(req.body.image)) { // 이지미를 여러 개 올리면 image: [파일명1.png, 파일명2.png]
+                const images = await Promise.all(req.body.image.map((image) => Image.create({ src: image })));
+                await post.addImages(images);
+            } else { // 이미지를 하나만 올리면 image: 파일명.png
+                const image = await Image.create({ src: req.body.image });
+                await post.addImages(image);
+            }
+        }
+    }
+}
+```        
+
+🗂 front/component/PostForm.js      
+```javascript
+const onSubmit = useCallback(() => {
+    if (!text || !text.trim()) {
+        return alert('게시글을 작성하세요.');
+    }
+    const formData = new FormData();
+    imagePaths.forEach((p) => {
+        formData.append('image', p);
+    })
+    formData.append('content', text);
+    return dispatch({
+        type: ADD_POST_REQUEST,
+        data: formData,
+    });
+}, [text, imagePaths]);
+```
+제출 버튼을 누르면 text가 있는 지 확인부터 하고, imagePaths 속에 있는 image들을 formData에 넣고 text도 넣는다.      
+그리고 이 data에 넣어서 보낸다.     
+
+그리고 나면 redux에서 받고 imagePaths를 초기화 하고 작업을 끝낸다.    
+
+🗂 front/reducer/post.js        
+```javascript
+case ADD_POST_SUCCESS:
+    draft.addPostLoading = false;
+    draft.addPostDone = true;
+    draft.mainPosts.unshift(action.data);
+    draft.imagePaths = [];
+    break;
+```            
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 사진을 올리다가 도중에 제거 버튼을 눌렀을 때 처리하기
+---
+사진을 올리다가 잘못 지정했거나 마음이 바뀌어서 지우고 싶어질 때가 있을 것이다.     
+그럴 땐 제거 버튼을 눌러서 사진을 없앨 필요가 있다.     
+
+🗂 front/component/PostForm.js      
+```javascript
+const onRemoveImage = useCallback((index) => () => {
+    dispatch({
+        type: REMOVE_IMAGE,
+        data: index,
+    })
+})
+
+<div>
+    <Button onClick={onRemoveImage(i)}>제거</Button>
+</div>
+```    
+버튼을 누르면 다음과 같은 액션이 실행됨        
+
+🗂 front/reducer/post.js        
+```javascript
+const reducer = (state = initialState, action) => {
+    return produce(state, (draft) => { // state가 이름이 draft로 바뀜
+        switch (action.type) {
+            case REMOVE_IMAGE:
+                draft.imagePaths = draft.imagePaths.filter((v, i) => i !== action.data);
+                break;
+```                
+imagePaths 속에 있는 전달 받은 index의 사진을 삭제함        
+      
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 hashtag 적용하는 방법
+---
+
+🗂 back/routes/post.js      
+```javascript
+router.post('/', isLoggedIn, upload.none(), async (req, res, next) => {
+    try {
+        const hashtags = req.body.content.match(/#[^\s#]+/g);
+        // content 내에서 정규화를 통해서 #가 들어간 단어를 찾아낸다.
+        ...
+        if (hashtags) {
+                const result = await Promise.all(hashtags.map((tag) => Hashtag.findOrCreate({ // 이미 등록된 hashtag면 생성하지 않음
+                    where: { name: tag.slice(1).toLowerCase() }, // db 내에서는 대소문자 관계 없어 소문자로 만들어줌
+                }))); // [[노드, true], [리액트,true ]]
+                await post.addHashtags(result.map((v) => v[0]));
+            }
+        }
+}
+```
+
+
+🗂 front/component/PostCardContent.js       
+```javascript
+const PostCardContent = ({ postData }) => {
+    return (
+        <div>
+            {postData.split(/(#[^\s#]+)/g).map((v, i) => {
+                if (v.match(/(#[^\s#]+)/)) {
+                    return <Link href={`/hashtag/${v.slice(1)}`} key={i}><a>{v}</a></Link>
+                    // /hashtag/${v.slice(1)}는 글자 첫번째인 #을 떼는 기능
+                }
+                return v;
+            })}
+        </div>
+    )
+}
+```
+![1-1](/assets/img/web/2021-09-05/1-4.png)          
+위와 같이 hashtag가 생성되고       
+<br/> 
+
+![1-1](/assets/img/web/2021-09-05/1-5.png)        
+Hashtag 테이블에 '노드', '익스프레스'라는 단어가 1,2 번으로 등록되어 있고        
+![1-1](/assets/img/web/2021-09-05/1-6.png)          
+PostHashtag에 노드, 익스프레스라는 단어가 게시글 PostId 5,6번과 매칭되어 있는 것을 확인할 수 있다.     
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟 lastId를 사용한 무한 스크롤
+---
+🗂 pages/index.js
+```javascript
+ if (hasMorePost && !loadPostLoading) {
+    const lastId = mainPosts[mainPosts.length - 1]?.id;
+    dispatch({
+            type: LOAD_POST_REQUEST,
+            lastId,
+        });
+ }
+```              
+hasMorePost가 true이고 현재 loadPostLoading 상태가 아니면 lastId를 찾는데 lastId는 mainPosts의 가장 마지막 id이다.      
+이를 찾아서 액션을 통해서 redux로 보낸다.       
+
+🗂 sagas/post.js           
+```javascript
+function loadPostAPI(lastId) { // 제네레이터 아님
+    return axios.get(`/posts?lastId=${lastId}` || 0);
+    // 혹시 게시물이 없으면 undefine일 수도 있으므로 || 0을 해줌
+}
+function* loadPost(action) {
+    try {
+        const result = yield call(loadPostAPI, action.lastId);
+    }
+}
+```
+loadPost는 액션으로부터 받은 lastId를 API로 보내고 get으로 처리해주기 때문에 두번쨰 인자에 data를 담을 수 없다.     
+왜냐하면 get에서 두번째 인자는 withCredentials이 들어갈 자리이기 때문이다. 따라서 query로 처리한다.     
+
+🗂 front/reducer/post.js
+```javascript
+case LOAD_POST_SUCCESS:
+    draft.loadPostLoading = false;
+    draft.loadPostDone = true;
+    // draft.mainPosts = action.data.concat(draft.mainPosts); // mainPosts에 추가되는 게시물을 이어붙임
+    // draft.hasMorePost = draft.mainPosts.length < 50; // 덧붙인 길이가 50을 넘는가?
+    draft.mainPosts = draft.mainPosts.concat(action.data); // mainPosts에 추가되는 게시물을 이어붙임
+    draft.hasMorePost = action.data.length === 10; // 덧붙일 길이가 10인가? 맞으면 true 보다 작으면 false
+    break;
+```
+불러올 포스트가 아랫쪽에 붙도록 수정	    
+
+🗂 back/routes/posts.js        
+```javascript
+const { Op } = require('sequelize');
+router.get('/', async (req, res, next) => {
+    try {
+        const where = {};
+        if (parseInt(req.query.lastId, 10)) { // 초기 로딩이 아닐 때
+            where.id = { [Op.lt]: parseInt(req.query.lastId, 10) }
+        }
+        const posts = await Post.findAll({
+            where,
+            limit: 10,
+```    
+만약 게시물이 하나도 없을 때의 상황을 가정한 코드       
+있다면 lastId보다 작은 수를 10개 보낸다.                
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
