@@ -1,0 +1,59 @@
+---
+layout: post
+title: "210906-TIL(Next.js)"
+subtitle: "TIL-210906"
+categories: til
+tags: til
+comments: false
+---
+
+
+## 🌟 SSR 시작하기
+---
+현재는 CSR을 하고 있기 때문에 첫페이지를 로딩할 때      
+브라우저 -> 프론트 서버 -> 브라우저 -> 프론트 서버 -> 백엔드 서버 -> 프론트 서버 -> 브라우저                
+라는 과정을 거치고 있기 때문에 로그아웃된 화면이 나왔다가 정보를 받아온 후 로그인 된 페이지를 보여주고 있다.    
+<br/>
+
+하지만 SSR을 사용하면 처음부터      
+브라우저 -> 프론트 서버 -> 백엔드 서버 -> 프론트 서버 -> 브라우저                
+라는 과정을 거치기 때문에 로그아웃된 화면이 나타나지 않는다.        
+
+이를 위해서는       
+
+🗂 reducer/index.js        
+```js
+const rootReducer = (state, action) => {
+    switch (action.type) {
+        case HYDRATE:
+            console.log('HYDRATE', action);
+            return action.payload;
+        default: {
+            const combinedReducer = combineReducers({
+                user,
+                post,
+            });
+            return combinedReducer(state, action);
+        }
+    }
+};
+```
+
+🗂 pages/index.js      
+```js
+export const getServerSideProps = wrapper.getServerSideProps((store) => async ({ req }) => { // 이 코드가 있으면 서버 쪽에서 SSR을 함
+    store.dispatch({
+        type: LOAD_MY_INFO_REQUEST,
+    });
+    store.dispatch({
+        type: LOAD_POST_REQUEST,
+    });
+    store.dispatch(END);
+    await store.sagaTask.toPromise();
+})
+```
+원래는 홈에 접속하고 나서 useCallback을 통해서 실행 되었던 dispatch를 getServerSideProps함수 안에 넣어줘서 SSR을 한 후 dispatch하도록 수정했다.     
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
