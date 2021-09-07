@@ -1,0 +1,34 @@
+---
+layout: post
+title:  "[TroubleShooting] regeneratorRuntime error"
+subtitle:   "JS"
+categories: develop
+tags: front
+comments: true
+---
+![1-1](/assets/img/web/js.png)         
+# 🌟 regeneratorRuntime error
+---
+## 🚔 문제 발견
+---
+```js
+const loadItem = async () => {
+    // 백엔드에 다음 페이지를 요구하는 post req를 보냄
+    const response = await fetch('/api/pages', {
+        ...
+    });
+```
+![1-1](/assets/img/web/2021-09-07/1-2.png)         
+loadItem을 async/await 방법으로 불러오려하자 regeneratorRuntime error가 발생함      
+<br/>
+
+## 🔍 해결 방법
+이 에러를 처리하기 위해서는 **babel-polyfill**를 설치해줘야한다.        
+```
+npm install --save @babel/polyfill
+```
+그리고 위치는 해당 js 파일의 제일 위에          
+```js
+require("babel-polyfill");
+```
+babel-polyfill을 require 해준다.       

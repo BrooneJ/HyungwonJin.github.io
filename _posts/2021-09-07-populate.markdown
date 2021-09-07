@@ -1,0 +1,51 @@
+---
+layout: post
+title:  "[MongoDB] populate를 한 다음 limit를 적용하기"
+subtitle:   "JS"
+categories: develop
+tags: back
+comments: true
+---
+![1-1](/assets/img/web/mongodb.png)         
+# 🌟 MongoDB의 populate를 한 다음 limit를 적용하기
+---
+home에서 모든 단어를 받아올 때는 populate를 사용할 필요가 없었지만 user가 가지고 있는 단어를 가져오기 위해서는 populate가 필요했고 이떄는 limit를 적용하는 방법이 좀 달랐다.        
+<br/>
+
+✔️ home에서 limit를 쓸 때
+```js
+export const loadPages = async (req, res) => {
+    const { body: { pageCounter } } = req;
+    const words = await Word.find({}).sort({ createdAt: "desc" }).limit(10).skip((pageCounter - 1) * 10);
+    if (words.length === 0) {
+        return res.sendStatus(404);
+    }
+    return res.status(201).json({ words });
+}
+```
+
+✔️ mypage에서 limit를 쓸 때
+```js
+export const mypageLoading = async (req, res) => {
+    const { body: { pageCounter } } = req;
+    const { id } = req.params;
+    const wordsData = await User.findById(id).populate({ // populate를 사용
+        path: "words", // 가져올 model
+        options: {
+            sort: {
+                createdAt: "desc"
+            },
+            limit: 10,
+            skip: (pageCounter - 1) * 10,
+        }
+    });
+    if (wordsData.words.length === 0) {
+        return res.sendStatus(404);
+    }
+    return res.status(201).json({ words: wordsData.words });
+}
+```
+위의 코드 처럼 options를 설정해주면 limit를 사용할 수 있다.     
+
+<https://stackoverflow.com/questions/32207457/node-js-mongoose-populate-limit>      
+이 글을 참고해서 해결할 수 있었다.      
