@@ -1,0 +1,54 @@
+---
+layout: post
+title: "210908-TIL(NEXT.js)"
+subtitle: "TIL-210908"
+categories: til
+tags: til
+comments: false
+---
+
+## 🌟 SSR할 떄 쿠키를 공유하는 방법
+---
+현재 아래의 코드를 입력하지 않고 실행한 경우에 로그인을 하고 새로고침을 하면 로그인이 풀려버리는 것을 확인할 수 있다.       
+그 원인은 아래의 그림과 같이        
+
+![1-1](/assets/img/web/2021-09-08/1-1.png)         
+cookie를 전달해주지 않기 떄문이다.      
+<br/>
+
+🗂 front/pages/index.js        
+```js
+export const getServerSideProps = wrapper.getServerSideProps((store) => async ({ req }) => { // 이 코드가 있으면 서버 쪽에서 SSR을 함
+    const cookie = req ? req.headers.cookie : '';
+    axios.defaults.headers.Cookie = '';
+    if (req && cookie) { // 내 로그인 정보가 다른 사람에게 공유될 가능성을 배제시킴
+        axios.defaults.headers.Cookie = cookie;
+    }
+    ...
+})
+```
+따라서 위의         
+```js
+const cookie = req ? req.headers.cookie : '';
+axios.defaults.headers.Cookie = '';
+```
+이 부분까지만 공유하면 일단 새로고침을 해도 로그인이 풀리지 않긴 하지만 다른 문제가 일어난다.       
+그 문제는 내 쿠키가 다른 유저한테도 공유된다는 것이다...        
+
+따라서 if문을 사용해서 제어해주어야한다.        
+```js
+if (req && cookie) { // 내 로그인 정보가 다른 사람에게 공유될 가능성을 배제시킴
+        axios.defaults.headers.Cookie = cookie;
+    }
+```
+이 부분을 적어줌으로써 쿠키를 전달해주고 값을 지워서 공유되는 일이 없도록한다.      
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
+
+## 🌟
+---
+
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+<br/>
