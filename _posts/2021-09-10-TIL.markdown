@@ -1,0 +1,30 @@
+---
+layout: post
+title: "210910-TIL(javascript)"
+subtitle: "TIL-210910"
+categories: til
+tags: til
+comments: false
+---
+
+## 🌟 예문 속에 나온 단어에 색 넣기
+---
+title에 있는 단어와 example에 있는 예문을 정규표현식으로 비교해서 해당 글자를 찾아내서 빨간 글자로 바꿔주었다.      
+우선적으로 일본어를 찾아서내서 바꾸는 버전을 만들었다.      
+대부분의 단어는 마지막 글자가 바뀌는 변화형을 가지고 있기 떄문에 우선 firstLetter이라는 변수를 두어서 첫글자를 찾아내고, lastSecondLetter라는 변수를 두어서 끝에서 두번째 글자를 찾아냈다.      
+```js
+const titleWord = title.innerText;
+const firstLetter = titleWord[0];
+const lastSecondLetter = titleWord[titleWord.length - 2];
+```
+그리고 마지막 글자가 변화하지 않는 모양이면 그대로 넣어주고 없으면 포함하지 않는 방식으로 처리했다.     
+그리고 두 글자 일 때와 아닐 때로 구분했다.       
+```js
+if (wordLength === 2) { // 두 글자 일 때
+        regexp = new RegExp(`${firstLetter}${lastLetter}?(いた)?(り)?(った)?`, 'gi');
+    }
+    if (wordLength >= 3) { // 세 글자 일 때
+        regexp = new RegExp(`${firstLetter}.*${lastSecondLetter}${lastLetter}?(いた)?(り)?(った)?`, 'gi');
+    }
+```
+그리고 뒤에는 변화형이 있을 경우 여러경우를 생각해서 다양한 변화형을 넣어주었다.

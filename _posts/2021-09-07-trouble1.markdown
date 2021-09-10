@@ -23,12 +23,23 @@ loadItem을 async/await 방법으로 불러오려하자 regeneratorRuntime error
 <br/>
 
 ## 🔍 해결 방법
-이 에러를 처리하기 위해서는 **babel-polyfill**를 설치해줘야한다.        
-```
-npm install --save @babel/polyfill
-```
-그리고 위치는 해당 js 파일의 제일 위에          
-```js
-require("babel-polyfill");
-```
-babel-polyfill을 require 해준다.       
+---
+2가지 방법이 있는데 2번 방법을 더 추천함        
+babel-polyfill는 없어질지도 모른다고 함           
+1. babel-polyfill       
+    이 에러를 처리하기 위해서는 **babel-polyfill**를 설치해줘야한다.        
+    ```
+    npm install --save @babel/polyfill
+    ```
+    그리고 위치는 해당 js 파일의 제일 위에          
+    ```js
+    require("babel-polyfill");
+    ```
+    babel-polyfill을 require 해준다.       
+
+2. regenerator-runtime     
+    regenerator-runtime를 npm package를 통해서 설치하고      
+    ```
+    npm i regenerator-runtime      
+    ```
+    이를 import 해주면 작동한다.
