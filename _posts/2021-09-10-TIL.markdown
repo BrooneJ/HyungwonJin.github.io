@@ -27,4 +27,6 @@ if (wordLength === 2) { // 두 글자 일 때
         regexp = new RegExp(`${firstLetter}.*${lastSecondLetter}${lastLetter}?(いた)?(り)?(った)?`, 'gi');
     }
 ```
-그리고 뒤에는 변화형이 있을 경우 여러경우를 생각해서 다양한 변화형을 넣어주었다.
+그리고 뒤에는 변화형이 있을 경우 여러경우를 생각해서 다양한 변화형을 넣어주었다.        
+
+match를 사용하면 정규식에 해당하는 요소를 찾을 수 있음
