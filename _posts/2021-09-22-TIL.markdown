@@ -1,0 +1,70 @@
+---
+layout: post
+title: "210922-TIL(css)"
+subtitle: "TIL-210922"
+categories: til
+tags: til
+comments: false
+---
+
+# 🌟 css
+---
+
+## 🌟 position: sticky;
+---
+.scroll-graphic{
+	position: sticky;
+	top: 0;
+	height: 100vh;
+}
+스티키를 사용하면 해당 요소가 지정 위치에 도달하는 순간 지정 위치에 달라 붙는 느낌을 연출할 수 있다.        
+
+## 🌟 position: relative;
+---
+기본값은 static이고 scroll-text가 scroll-graphic보다 아래 있기 때문에 relative를 하면 위로 올라옴
+
+```html
+<div class="first">image 1</div>
+<div class="second">text 1</div>
+```
+위처럼 image 1이 위에 있는 경우       
+css에서 position: relative를 적용하면        
+```css
+.second{
+    position:relative;
+}
+```
+image1 위에 text 1이 올라가도록 만들 수 있다.       
+
+## 🌟 margin collapsing (마진 병합현상)
+---
+발생하는 조건
+1. 인접해 있는 block 요소끼리만 일어난다.
+2. 좌우에는 나타나지 않고 상하단에만 나타난다.
+
+해결하기 위해서는 
+1. padding-bottom: 1px;
+2. overflow:hidden:
+이 있는데 만약에 overflow를 사용하게 되면 positionLsticky;를 사용할 수 없다고 함        
+
+
+## 🌟 dataset
+---
+html에는 dataset이라는 요소가 있고 임의로 지정해서 편리하게 사용할 수 있다.     
+ex) data-xxx(xxx는 자기가 지정하고 싶은 명칭)
+
+### 🔍 js로 지정하는 방법
+
+![img](https://i.imgur.com/HdTpJ7i.png) 
+이렇게 dataset이 지정되어 있지 않은 html에 다음과 같은 js 코드를 적용하면
+```js
+const stepElems = document.querySelectorAll('.step');
+for (let i = 0; i < stepElems.length; i++) {
+    // stepElems[i].setAttribute('data-index', i);
+	stepElems[i].dataset.index = i;
+}
+```
+
+![img](https://i.imgur.com/vGI68do.png)
+위와 같은 data-index라는 dataset이 적용된 html을 볼 수 있다.        
+
