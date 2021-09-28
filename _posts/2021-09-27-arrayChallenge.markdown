@@ -248,3 +248,258 @@ inputArray.forEach((el) => {
   sum += el;
 })
 ```
+## mapAddPercent
+---
+Question    
+map 메소드를 사용해 배열 각각 숫자 뒤에 %를 붙인 문자열을 만드세요    
+```js
+const test1 = {
+  input: [100, 10, 20, 40],
+  answer: ['100%', '10%', '20%', '40%'],
+};
+```
+Answer      
+```js
+function solution(inputArray) {
+    const mapArray = inputArray.map(el => el + '%');
+    return mapArray;
+}
+```
+
+## mapAppendOrder
+---
+Question    
+배열의 값을 name 프로퍼티에 넣고 몇번째 원소인지를 order에 넣은 객체의 배열을 출력하세요    
+```js
+const test1 = {
+  input: ['홍길동', '둘리', '루피'],
+  answer: [
+    { name: '홍길동', order: 1 },
+    { name: '둘리', order: 2 },
+    { name: '루피', order: 3 },
+  ],
+};
+```
+Answer      
+```js
+function solution(inputArray) {
+    const answer = inputArray.map((el, idx) => {
+        return {
+            name: el,
+            order: idx + 1
+        }
+    })
+    return answer;
+}
+```
+
+## sortByPrice
+---
+Question    
+배열안의 객체를 price를 기준으로 오름차순 정렬한 배열을 출력하세요    
+```js
+const test1 = {
+  input: [
+    {
+      name: '사과',
+      price: 1000,
+    },
+    {
+      name: '수박',
+      price: 5000,
+    },
+    {
+      name: '당근',
+      price: 2000,
+    },
+    {
+      name: '참외',
+      price: 10000,
+    },
+  ],
+  answer: [
+    { name: '사과', price: 1000 },
+    { name: '당근', price: 2000 },
+    { name: '수박', price: 5000 },
+    { name: '참외', price: 10000 },
+  ],
+};
+```
+Answer    
+```js
+function solution(inputArray) {
+    const answer = inputArray.sort((a, b) => a.price - b.price);
+    return answer;
+}
+```
+
+## sortByPriceAndQuantity 
+---
+Question    
+배열안의 객체를 price를 기준으로 오름차순 정렬한 배열을 출력하세요    
+만약 price가 같다면 quantity기준으로 오름차순 정렬하세요    
+```js
+const test1 = {
+  input: [
+    {
+      name: '사과',
+      price: 1000,
+      quantity: 2,
+    },
+    {
+      name: '수박',
+      price: 5000,
+      quantity: 20,
+    },
+    {
+      name: '당근',
+      price: 2000,
+      quantity: 50,
+    },
+    {
+      name: '참외',
+      price: 5000,
+      quantity: 10,
+    },
+    {
+      name: '오이',
+      price: 2000,
+      quantity: 49,
+    },
+  ],
+  answer: [
+    { name: '사과', price: 1000, quantity: 2 },
+    { name: '오이', price: 2000, quantity: 49 },
+    { name: '당근', price: 2000, quantity: 50 },
+    { name: '참외', price: 5000, quantity: 10 },
+    { name: '수박', price: 5000, quantity: 20 },
+  ],
+};
+```
+Answer    
+```js
+function solution(inputArray) {
+    const answer = inputArray.sort((a, b) => {
+        return a.price - b.price || a.quantity - b.quantity;
+    })
+    return answer;
+}
+```
+
+## spreadOperatorMaxValue
+---
+Question    
+Spread Operator를 이용해서 값의 최대, 최소값을 구하세요   
+```js
+const test1 = {
+  input: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  answer: 'max : 10, min : 1',
+};
+```
+Answer      
+```js
+function solution(inputArray) {
+    const max = Math.max(...inputArray);
+    const min = Math.min(...inputArray);
+    return `max : ${max}, min : ${min}`;
+}
+```
+
+## reduceNameNickname
+---
+Question      
+입력받은 객채배열의 nickname을 key, name을 value로 하는 객체를 출력하세요     
+```js
+[
+    {
+      name: '홍길동',
+      nickname: 'hong',
+    },
+    {
+      name: '둘리',
+      nickname: '2li',
+    },
+    {
+      name: '오스트랄로피테쿠스',
+      nickname: '1Cin',
+    },
+  ],
+  answer: { hong: '홍길동', '2li': '둘리', '1Cin': '오스트랄로피테쿠스' },
+};
+```
+Answer      
+```js
+function solution(inputArray) {
+    const answer = inputArray.reduce((prev, current) => {
+        return {
+            ...prev,
+            [current.nickname]: current.name,
+        }
+    }, {});
+    return answer;
+}
+```
+
+## reduceMaxValueNIndex
+---
+Question    
+reduce 메소드를 사용해 최댓값의 값을 maxValue에, 해당 값의 index를 idx에 넣은 객체를 출력하세요   
+```js
+const test1 = {
+  input: [3, 29, 38, 12, 57, 74, 40, 85, 61],
+  answer: { maxValue: 85, idx: 7 },
+};
+
+const test2 = {
+  input: [-24, -2, -13, -49, -999999, -17],
+  answer: { maxValue: -2, idx: 1 },
+};
+//최댓값이 중복일 때에는 먼저 나온 최댓값의 인덱스를 유지하도록 설정하였습니다.
+const test3 = {
+  input: [2, -20, 21, -874, 99, -16, -29, 99],
+  answer: { maxValue: 99, idx: 4 },
+};
+```
+Answer    
+```js
+function solution(inputArray) {
+    const answer = inputArray.reduce((acc, cur, idx) => {
+        if (acc?.maxValue < cur) {
+            return {
+                maxValue: cur,
+                idx,
+            }
+        }
+        return acc;
+    }, { maxValue: -1e9, idx: -1 })
+    return answer;
+}
+```
+
+## expDivOdd
+---
+Question    
+제곱한 후 3으로 나눈 나머지가 홀수인 것 을 뽑은 배열의 총 합을 구하세요.    
+```js
+const test1 = {
+  input: [1, 7, 3, 4, 6],
+  answer: 66,
+};
+
+const test2 = {
+  input: [2, 3, 6, 8, 10],
+  answer: 168,
+};
+```
+Answer      
+```js
+function solution(inputArray) {
+    const answer = inputArray.reduce((acc, cur) => {
+        if ((cur ** 2) % 3 === 1) {
+            return acc + cur ** 2;
+        }
+        return acc;
+    }, 0)
+    return answer;
+}
+```
