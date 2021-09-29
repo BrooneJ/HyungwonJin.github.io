@@ -1,0 +1,45 @@
+---
+layout: post
+title: "[TroubleShooting] 다중 클릭 중복 데이터 전송 방지"
+subtitle: "JS"
+categories: develop
+tags: front
+comments: false
+---
+
+# 다중 클릭 중복 데이터 전송 방지
+---
+## 🚔 문제 발견
+---
+현재 단어를 업로드할 때 클릭을 여러번 하면 단어도 여러번 중복해서 업로드 되는 문제가 있었다.  
+<p align='center'>
+    <img src="https://i.imgur.com/EJggmj6.gif" width="400"/>
+</p>        
+
+
+## 🔍 해결 방법
+---
+따라서 js로 한번 등록 버튼을 클릭하면 그 다음부터는 등록 버튼이 비활성화 되도록 만들어주었다.           
+🗂 src/client/js/preventClick.js        
+```js
+const preventBtn = document.querySelector('input[type="submit"]');
+let clickable = true;
+
+const prev = (event) => {
+    if (clickable) {
+        clickable = false;
+    } else {
+        event.preventDefault();
+    }
+}
+
+if (preventBtn) {
+    preventBtn.addEventListener('click', prev);
+}
+```
+## ✅ 해결
+---
+<p align='center'>
+    <img src="https://i.imgur.com/jTRdkKF.gif" width="400"/>
+</p>   
+위의 그림과 같이 여러번 클릭해도 한번만 업로드 된다.
