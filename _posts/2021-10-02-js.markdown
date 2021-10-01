@@ -1,0 +1,575 @@
+---
+layout: post
+title: "js 정리"
+subtitle: "js"
+categories: develop
+tags: front
+comments: false
+---
+
+![1-1](/assets/img/web/js.png)     
+
+
+# 배열
+---
+```js
+target = ['1','2','3','4']
+
+// 앞쪽 삽입, 빼기
+target.unshift('1')
+target.shift()
+
+// 뒤쪽 삽입, 빼기
+target.push('5')
+target.pop()
+
+// 배열에서 요소 찾기
+target.includes('2')
+// true
+
+target.includes('100')
+//false
+
+
+// 배열의 몇번째 자리?
+target.indexOf('1')
+//0
+
+target.indexOf('100')
+//-1 (없으면 -1)
+
+target.lastIndexOf('3')
+//2 (뒤에서 부터 검색)
+```
+
+# 0이 되는 값 6가지
+---
+1. 문자열의 빈 문자열
+2. 숫자 0
+3. boolean false
+4. null
+5. undefined
+6. NaN
+
+
+# 함수
+---
+```js
+function a() {}
+// 함수 선언문
+세미콜론 붙이지 않음
+a(); // 호출
+
+const b = function() {};
+// 함수 표현식
+```
+
+# 객체 리터럴
+---
+```js
+const hwjin = {
+	name: 진형원,
+	year: 1992,
+	month: 11,
+	date: 15,
+	gender: "Male"
+};
+```
+-속성의 이름이 필요한 경우에는 '객체 리터럴'을 사용     
+//속성 이름: 속성 값
+
+-이름이 필요없는 경우에는 '배열'을 사용     
+
+
+-접근방법
+```js
+hwjin.name // 진형원
+hwjin["name"] // 진형원
+```
+ㄴ왜 두개로 나눠서 쓰는가?
+1. 숫자 들어가면 error 발생     
+    ```js
+    ex)hwjin.2name // error     
+       hwjin["2name"] // OK
+    ```
+2. 띄어쓰기 불가        
+    ```js
+    ex) hwjin.c a //error       
+        hwjin["c a"] //OK       
+    ```
+-속성 제거
+```js
+ delete hwjin.name
+```
+
+# 메소드란?
+---
+객체의 속성 값으로 함수를 넣었을 때 이 속성을 메소드라고 함
+```js
+const debug = {
+	log: function(value) {
+		console.log(value);
+	},
+};
+debug.log("Hello, Method")
+```
+
+## 계산기 만들기
+---
+- 고차 함수는 { 과 return이 만나면 생략가능
+```js
+const onClickNumber = (number) => {
+	return () => {
+		if(operator) {
+			numTwo += number;
+		} else {
+			numOne += number;
+		}
+	$result.value += number;
+	}
+};
+
+//한단계 더 생략 가능
+
+const onClickNumber = (number) => () => {
+	if(operator) {
+		numTwo += number;
+	} else {
+		numOne += number;
+	}
+	$result.value += number;
+	};
+
+
+document.querySelector('#num-0').addEventListener('click', onClickNumber('0')); //onClickNumber자리는 함수 자리이지만 고차함수 이기에 ()속 변수 입력 가능
+```
+
+
+## 랜덤 변수 만들기
+---
+```js
+Math.floor(Math.random() * 9 + 1)
+```
+
+# join() 배열 -> 문자열
+---
+```js
+[3,1,4,6].join()
+// "3,1,4,6"
+
+[3,1,4,6].join(':')
+// "3:1:4:6"
+
+[3,1,4,6].join('')
+// "3146"
+```
+
+## split() 문자열 -> 배열
+---
+```js
+'3146'.split()
+// ["3146"]
+
+'3146'.split('')
+// ["3", "1", "4", "6"]
+
+'3146'.split("").map((a) => Number(a))
+// [3, 1, 4, 6]
+
+'3146'.split('1')s
+// ["3", "46"]
+
+"food,movies,music".split(".").map(word => `#${word}`)
+// ["#food", "#movies", "#music"]
+```
+
+# append() //태그도 같이 만들 수 있음
+```js
+$log.append(`${value}`, document.createElement('br');
+```
+
+# 배열 원소 위치 탐색	
+---
+```js
+'2345'.indexOf(3) -> 1
+'2345'.indexOf(6) -> -1
+
+[2,3,4,5].indexOf(5) -> 3
+[2,3,4,5].indexOf("5") -> -1
+
+'2345'.includes(3) -> true
+[2,3,4,5].includes('5') -> false
+```
+
+# forEach();
+---
+```js
+for(let i = 0; i < answer.length; i++){
+	const index = value.indexOf(answer[i]);
+	if(index > -1){
+		if(index === i){
+			strike += 1;
+		} else {
+			ball += 1;
+		}
+	}
+}
+
+|
+v
+
+answer.forEach((element, i) => {
+	const index = value.indexOf(element);
+	if (index > -1){
+		if(index === i){
+			strike += 1;
+		} else {
+		ball += 1;
+		}
+	}
+}
+```
+# map
+---
+```js
+const number = [];
+for (let i = 0; i < 9; i++){
+	number.push(n + 1);
+}
+
+|
+v
+
+const number = Array(9).fill(0).map((element, i) => {
+	return i + 1;
+}
+```
+
+**map(), slice()는 원본이 변하지 않음**
+
+# splice
+---
+splice(index, 갯수, 추가할 것)
+splice(index, index)
+
+
+# 원본을 남겨두고 정렬하는 방법
+---
+```js
+array.slice().sort((a, b) => a - b)
+//splice는 새로운 배열을 만듦 -> 그 새로운 배열을 정렬함
+```
+
+## 문자열 정렬 방법
+---
+- 첫글자로 비교     
+    오름차순
+    ```js
+    arr.slice().sort((a, b) => a[0].charCodeAt() - b[0].charCodeAt())
+    ```
+    내림차순
+    ```js
+    arr.slice().sort((a, b) => b[0].charCodeAt() - a[0].charCodeAt())
+    ```
+
+- 사전 순으로 배열하기
+    ```js
+    arr.slice().sort((a, b) => a.localeCompare(b))
+    ```
+    거꾸로
+    ```js
+    arr.slice().sort((a, b) => b.localeCompare(a))
+    ```
+# reduce
+---
+배열.reduce((누적, 현재, index) => (식), 초깃값: 생략하면 배열의 첫번째 값이 초깃값)
+```js
+[1,2,3,4].reduce((a, c) => (a + c), 0)
+//a: 0, c: 1
+//a: 1, c: 2
+//a: 3, c: 3
+//a: 6, c: 4
+//10
+
+
+[1,2,3,4].reduce((a, c) => (a * c), 1)
+//a: 1, c: 1
+//a: 1, c: 2
+//a: 2, c: 3
+//a: 6, c: 4
+//24
+
+["철수", "영희", "현영", "한솔"].reduce((a, c, i) => { a[i] = c; return a }, {})
+//a: {}, c: "철수", i = 0
+//a: {0: "철수"}, c: "영희", i = 1
+//a: {0: "철수", 1: "영희"}, c: "현영", i = 2
+//a: {0: "철수", 1: "영희", 2: "현영"}, c: "한솔", i = 3
+//{0: "철수", 1: "영희", 2: "현영", 3: "한솔"}
+```
+
+# classList
+---
+태크.classList 객체를 통해 태그에 붙은 클래스를 조작할 수 있습니다. 해당 클래스가 존재하는지 확인하려면 contains 매소드를 사용      
+
+태그.classList.contains("클래스");      
+   ㄴ 사용법
+
+태그.classList.add("클래스");       
+태그.classList.replace('기존클래스', '수정클래스');     
+태그.classList.remove('클래스');        
+
+
+# 구조 할당
+---
+```js
+const obj = {
+	a: 'hello',
+	b: {
+		c: 'hi',
+		d: { e: 'wow'},
+		},
+	};
+// const { a, b: { c, d: {e} } } = obj;
+```
+이 상황에서는 b, d는 변수를 할당할 수 없다.
+
+따라서 변수를 할당하기 위해서는
+```js
+const { a, b } = obj;
+const { d: { e } } = b;
+```
+
+# 2차원 배열을 1차원 배열로 바꾸는 방법
+---
+```js
+array = [[1,2,3],[4,5,6],[7,8,9]]
+array.flat() // [1,2,3,4,5,6,7,8,9]
+//파이썬의 extends느낌?
+```
+
+# every, some 구별
+
+- rows 가 모두 채워져있지 않은 경우      
+    ```js
+    rows.flat().every((td) => td.textContent)
+    //false
+    ```
+- rows가 모두 채워져 있는 경우
+    ```js
+    rows.flat().every((td) => td.textContent)
+    //true
+    ```
+- rows가 하나라도 채워진 경우
+    ```js
+    rows.flat().some((td) => td.textContent)
+    //true
+    ```
+
+# 이벤트 버블링
+
+이벤트 버블링은 이벤트가 발생할 때 부모 태그에도 동일한 이벤트가 발생라는 현상을 말합니다. 테이블이 있을 때 td의 부모 태그는 tr이고, tr의 부모태그는 table 입니다. td태그를 클릭하면 td 태그에 click 이벤트가 발생하고, td 태그의 부모인 tr태그와 tr태그의 부모인 table 태그에도 발생합니다. 즉, td태그에서 발생한 click이벤트가 table 태그까지 전달됩니다.
+
+이벤트 버블링 현상이 일어나면 이벤트 리스너 콜백 함수의 event.target이 이벤트가 발생한 태그로 바뀌므로 주의해야한다. 이벤트가 발생한 태그가 아닌 이벤트를 연결한 태그에 접근하고 싶다면 event.currentTarget을 사용합니다.
+
+
+# 얕은 복사 & 깊은 복사
+---
+```js
+const a = [];
+const b = 'hello';
+const c = {};
+
+// 참조한 경우
+const arr = [a, b, c];
+const arr1 = arr;
+
+arr1[1] = 'hi';
+arr[1] // 'hi'
+//arr1을 변경했는데 arr도 바뀌고 말았다.
+
+
+// 얕은 복사
+const arr2 = [...arr];
+arr2[1] = 'babo';
+
+arr[1] // 'hi'
+//arr2를 변경했지만 arr 값은 바뀌지 않았다.
+```
+하지만...
+```js
+arr2[0].push(1);
+arr[0] // [1]
+// arr2[0]에 1을 집어 넣었는데 arr[0]에도 1이 들어가버렸다...!
+```
+얕은 복사는 가장 바깥 즉, 배열 속의 원시값은 복사가 되지만 배열 속의 배열[], {} 은 복사가 되지 않고 참조 된다.      
+-> 따라서 얕은 복사에서 객체 속의 객체는 복사되지 않는다
+
+@깊은 복사(여기서 소개한 JSON.parse는 간단한 방법, 성능이 느리고 함수나 Math, Date 같은 객체나 프로토타입에 적용 안되는 방법, 따라서 실무에서는 lodash 같은 라이브러리를 사용)
+```js
+const arr3 = JSON.parse(JSON.stringify(arr))
+arr3[0].push(2)
+arr[0] // [1] //위에서 얕은 복사 때문에 1이 들어가 있음
+arr3[0] // [1, 2]
+//arr과 arr3은 별도의 값을 보임
+
+예제)
+const a = 'b';
+const c = ['d', true, 1];
+const e = { g: 'h'};
+const i = [{ j:'k'}, {l: 'm'}];
+const n = { o: { p: 'q' }};
+
+답
+const a1 = a;
+const c1 = [...c];
+const e1 = {...e};
+const i1 = JSON.parse(JSON.stringify(i));
+const n1 = JSON.parse(JSON.stringify(n));
+```
+
+# concat() 
+---
+```js
+const g = ['1'];
+g.concat(2, 3);
+// g = ['1', 2, 3]
+
+얕은 복사도 가능
+g.concat()
+//['1']
+```
+
+
+# this
+---
+```js
+const b = {
+	name: '제로초',
+	sayName(){
+		console.log(this === b);
+		}
+	};
+b.sayName(); //true
+
+const bf = b.sayName;
+
+bf(); //false //이 때는 this가 window를 가리킴
+```
+기본적으로 this는 window를 가리키지만 객체 안에 있을 때는 자신이 속한 객체를 가리킴
+
+#따라서 b.sayName(객체.메소드) 과 같이 '.' 이 있을 때 자신이 속한 객체를 가리킨다.
+
+=======================
+this가 가리키는 것의 다른점
+```js
+class Game {
+	constructor(){
+	}
+	start(){
+	console.log(this);
+	$gameMenu.addEventListener("submit", (event) => {
+	if(input === '1'){
+	console.log(this);
+	// 이렇게 화살표 함수를 쓴 경우는 바깥의 this를 그대로 가져와서 씀(즉, this는 Game임)
+
+$gameMenu.addEventListener("submit", function(event){
+	if(input === '1')
+	console.log(this)
+	// 이렇게 function함수를 쓰면 이벤트 리스너 내부의 this는 $gameMenu를 가리킴
+	)
+
+this는 호출되는 순간 결정된다.
+```
+++추가)
+## 객체.bind()
+```js
+function a() {
+	console.log(this);
+	}
+a.bind(document);
+
+//함수 선언문의 this는 위와 같이 bind메소드를 사용해서 직접 바꿀 수 있다. (화살표 함수는 안됨, 무조건 바깥 쪽 this를 가져오기 때문)
+```
+
+# 호출스택
+함수들이 실행되는 공간
+
+## 백그라운드
+요약: 타이머나 이벤트 리스너가 들어가있음
+
+백그라운드는 타이머를 처리하고 이벤트 리스너를 저장하는 공간입니다. setTime 같은 함수가 실행되면 백그라운드에서 시간을 재고 시간이 되면 setTimeout의 콜백함수를 태스크 큐로 보냅니다. 또한 addEventListener로 추가한 이벤트를 저장했다가 이벤트가 발생하면 콜백 함수를 테스크 큐로 보냅니다. 백그라운드에서 코드를 실행하는 것이 아니라 실행될 콜백 함수들이 태스트 큐로 들어간다는 것을 기억하세요.
+
+## 테스크 큐
+요약: 타이머나 이벤트 리스너의 콜백함수들이 들어가 있음
+
+테스크 큐는 실행돼야 할 콜백함수들이 줄을 서서 대기하고 있는 공간입니다. queue라는 단어가 줄이라는 뜻입니다. 사람들이 가게 앞에 줄을 서면 먼저 선 사람부터 차례로 들어가죠? 태스크 큐도 마찬가지 입니다. 태스크 큐에 먼저 들어온 함수부터 실행됩니다. 다만, 태스크 큐도 함수를 직접 실행하지 않습니다. 함수는 모두 호출 스택에서만 실행됩니다. 호출스택에 들어온 함수가 호출된다고 생각하면 됩니다.
+
+태스크 큐에서 호출 스택으로 함수를 이동시키는 존재가 바로 '이벤트 루프'입니다. 호출 스택이 비어있으면 이벤트 루프는 태스크 큐에서 함수를 하나씩 빼 내 호출스택으로 옮깁니다. 호출 스택으로 이동한 함수는 그제서야 실행됩니다. 실행이 완료된 함수는 호출스택에서 빠져나가게 되고, 호출스택이 비면 이벤트 류프는 태스크 큐에 있는 다음 함수를 호출스택으로 옮깁니다.
+
+## 이벤트 루프
+호출스택이 비어 있을 때 테스크 큐에 있는 함수들 하나씩 꺼내서 사용
+
+
+특이사항
+setTimeOut과 addEventListener는 호출스택과 백그라운드에 같이 들어간다.
+
+
+# 옵셔널 체이닝(?.)
+---
+배열에서 해당 값이 있으면 실행하라!
+
+ex) 
+```js
+mines.includes(data[rowIndex - 1]?.[cellIndex - 1]) && i++;
+//data[rowIndex - 1]이 있을 때 [cellIndex - 1]도 찾아라!
+```
+
+# bullish coalescing (??)
+null과 undefined가 아니면 앞에꺼 null과 undefined이면 뒤에꺼
+
+
+ex) 
+```js
+target.textContent = count ?? '';
+// target.textContent가 null 이나 undefined가 아니면 count를 실행
+
+0 ?? ''
+// 0
+
+null ?? ''
+// ''
+```
+
+
+번외) 
+```js
+// ||
+앞에께 false이면 뒤에꺼를 해라
+
+(5 > 3) || (2 < 0)
+//true //앞에게 true여서 앞에서 끝남
+
+(5 < 3) || (2 < 0)
+//false // 앞에게 false여서 뒤의 false라는 결과를 실행
+
+(5 < 3) || (2 > 0)
+//true // 앞에게 false여서 뒤의 true를 실행
+
+0 || ""
+// ""
+
+3 || ""
+// 3
+
+// &&
+앞에게 true면 뒤에꺼 실행
+
+(5 > 3) && (2 < 0)
+//false //앞에게 true여서 뒤에꺼 실행
+
+(5 > 3) && (2 > 0)
+//true
+
+(5 < 3) && (2 > 0)
+//false  // 앞에게 false이면 앞에꺼 실행
+```
