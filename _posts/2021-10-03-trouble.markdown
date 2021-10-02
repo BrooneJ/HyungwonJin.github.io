@@ -1,0 +1,59 @@
+---
+layout: post
+title: "[TroubleShooting] upload에서 select가 설정한 값으로 나타나지 않는 현상"
+subtitle: "JS"
+categories: develop
+tags: front
+comments: false
+---
+
+# DB로부터 받은 데이터로 select 값 지정하기
+---
+## 🚔 문제 발견
+---
+데이터 베이스에서 받아온 외국어 → 모국어의 value 값이 제대로 지정되어있지 않은 것을 발견
+<p align='center'>
+    <img src="https://i.imgur.com/ZlaHOGR.png" width="400"/>
+</p>        
+
+
+## 🔍 해결 방법
+---
+다른 form의 태그들과 달리 select는 value값을 그대로 받아올 수 없는 것 같다.     
+따라서 js로 설정해줘야한다고 판단함.  
+
+🗂 src/views/edit
+```pug
+select.selectLanguage(name="language", value=words.language)
+    option(value="kj") Korean → Japanese
+    option(value="ke") Korean → English
+    option(value="jk") Japanese → Korean
+    option(value="je") Japanese → English
+    option(value="ek") English → Korean 
+    option(value="ej") English → Japanese 
+```            
+우선 db로부터 받아온 value를 입력할 수 있는 것을 확인했다.
+<p align='center'>
+    <img src="https://i.imgur.com/piEgYVd.png" width="400"/>
+</p>    
+
+
+🗂 src/client/js/selectedLanguage.js        
+```js
+const select = document.querySelector('.selectLanguage');
+
+if (select) {
+    const selectValue = select.attributes[2].value;
+    for (let key of select) {
+        if (key.value === selectValue) { // select의 각 option을 순회하며 select의 value와 같은 값을 찾음
+            key.setAttribute('selected', true); 찾으면 selected를 true로 만듦
+        }
+    }
+}
+```
+## ✅ 해결
+---
+<p align='center'>
+    <img src="https://i.imgur.com/OOW2BYY.png" width="400"/>
+</p>   
+위와 같이 select의 value에 해당하는 값을 받아올 수 있게 되었다.
