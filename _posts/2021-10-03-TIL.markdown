@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "211003-TIL"
+title: "211003-TIL(Web Storage API, module)"
 subtitle: "TIL-211003"
 categories: til
 tags: til
