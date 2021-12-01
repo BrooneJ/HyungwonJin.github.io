@@ -3,15 +3,17 @@ layout: post
 title: "211008-TIL(Event Bubbling, Event Delegation)"
 subtitle: "TIL-211008"
 categories: til
-tags: til
+tags: til-2021-10
 comments: false
 ---
 
 # 버블링(event bubbling)
----
-출처:<https://ko.javascript.info/bubbling-and-capturing>        
 
-버블링이 일어나면 자식요소의 이벤트가 일어나면 연쇄적으로 부모요소의 이벤트까지 일어난다.       
+---
+
+출처:<https://ko.javascript.info/bubbling-and-capturing>
+
+버블링이 일어나면 자식요소의 이벤트가 일어나면 연쇄적으로 부모요소의 이벤트까지 일어난다.
 
 ```html
 <style>
@@ -21,27 +23,33 @@ comments: false
   }
 </style>
 
-<form onclick="alert('form')">FORM
-  <div onclick="alert('div')">DIV
+<form onclick="alert('form')">
+  FORM
+  <div onclick="alert('div')">
+    DIV
     <p onclick="alert('p')">P</p>
   </div>
 </form>
 ```
+
 가장 안쪽의 <p>를 클릭하면 순서대로 다음과 같은 일이 벌어집니다.
 
 1. <p>에 할당된 onclick 핸들러가 동작합니다.
 2. 바깥의 <div>에 할당된 핸들러가 동작합니다.
 3. 그 바깥의 <form>에 할당된 핸들러가 동작합니다.
-4. document 객체를 만날 때까지, 각 요소에 할당된 onclick 핸들러가 동작합니다.       
-이런 동작 방식 때문에 ```<p>``` 요소를 클릭하면 p → div → form 순서로 3개의 얼럿 창이 뜨는것이죠.     
+4. document 객체를 만날 때까지, 각 요소에 할당된 onclick 핸들러가 동작합니다.  
+   이런 동작 방식 때문에 `<p>` 요소를 클릭하면 p → div → form 순서로 3개의 얼럿 창이 뜨는것이죠.
 
 # 이벤트 위임(Event Delegation)
+
 ---
-자식 엘리먼트에 각각 위임을 하지 않고 부모 엘리먼트에 이벤트를 부여한 후 이벤트를 위임하는 방법   
+
+자식 엘리먼트에 각각 위임을 하지 않고 부모 엘리먼트에 이벤트를 부여한 후 이벤트를 위임하는 방법
 
 참고: <https://ui.toast.com/weekly-pick/ko_20160826>
 
-즉, 위의 주소에서는 
+즉, 위의 주소에서는
+
 ```html
 <ul id="menu">
   <li><button id="file">파일</button></li>
@@ -49,21 +57,25 @@ comments: false
   <li><button id="view">보기</button></li>
 </ul>
 ```
-이런식으로 html이 있을 때 아래와 같이 각각 이벤트를 달지말고    
+
+이런식으로 html이 있을 때 아래와 같이 각각 이벤트를 달지말고
+
 ```js
-document.getElementById("file").addEventListener("click", function(e) {
+document.getElementById("file").addEventListener("click", function (e) {
   // 파일 메뉴 동작
 });
-document.getElementById("edit").addEventListener("click", function(e) {
+document.getElementById("edit").addEventListener("click", function (e) {
   // 편집 메뉴 동작
 });
-document.getElementById("view").addEventListener("click", function(e) {
+document.getElementById("view").addEventListener("click", function (e) {
   // 보기 메뉴 동작
 });
 ```
-다음과 같이 부모 엘리먼트인 menu에 이벤트를 달아주고 조건을 달아서 이벤트를 위임하라는 것이다.    
+
+다음과 같이 부모 엘리먼트인 menu에 이벤트를 달아주고 조건을 달아서 이벤트를 위임하라는 것이다.
+
 ```js
-document.getElementById("menu").addEventListener("click", function(e) {
+document.getElementById("menu").addEventListener("click", function (e) {
   var target = e.target;
   if (target.id === "file") {
     // 파일 메뉴 동작
@@ -74,10 +86,13 @@ document.getElementById("menu").addEventListener("click", function(e) {
   }
 });
 ```
-따라서 메뉴가 추가할 때마다 이벤트를 새로 만들지 않아도 된다.   
+
+따라서 메뉴가 추가할 때마다 이벤트를 새로 만들지 않아도 된다.
 
 ## 이벤트 위임의 이점
+
 ---
+
 1. 동적인 엘리먼트에 대한 이벤트 처리가 수월하다.
 2. 상위 엘리먼트에서만 이벤트 리스너를 관리하기 때문에 하위 엘리먼트는 자유롭게 추가 삭제할 수 있다.
 3. 이벤트 핸들러 관리가 쉽다.
