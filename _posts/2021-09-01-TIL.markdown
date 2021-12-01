@@ -3,213 +3,250 @@ layout: post
 title: "210901-TIL(passport, React)"
 subtitle: "TIL-210901"
 categories: til
-tags: til
+tags: til-2021-09
 comments: false
 ---
 
 # 📝 공부할 거리
----
-1. cookie & session?       
-    백엔드에서 비밀번호로 정보를 보내지 않고 쿠키를 보내줌. 브라우저는 얻은 쿠기를 백엔드 서버를 쿠키로 보내면 해당 사용자임을 알 수 있음.      
-    백엔드는 우저의 정보를 모두 가지고 있으면 너무 데이터가 무겁기 때문에 id만 기억하고 id를 통해서 데이터베이스로부터 정보를 받아온다. 
 
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+---
+
+1. cookie & session?  
+   백엔드에서 비밀번호로 정보를 보내지 않고 쿠키를 보내줌. 브라우저는 얻은 쿠기를 백엔드 서버를 쿠키로 보내면 해당 사용자임을 알 수 있음.  
+   백엔드는 우저의 정보를 모두 가지고 있으면 너무 데이터가 무겁기 때문에 id만 기억하고 id를 통해서 데이터베이스로부터 정보를 받아온다.
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰  
 <br/>
 
 ## 🌟 passport login 과정 다시 복습
+
 ---
 
-1. front에서 back으로 전송      
-    🗂 front/components/LoginForm.js
-    ```javascript
-    const onSubmitForm = useCallback(() => {
-            // antd에서는 preventDefault가 이미 적용되어있어서 안해줘도 됨
-            dispatch(loginRequestAction({ email, password }));
-            // setIsLoggedIn(true);
-        }, [email, password]);
-    ```
-    에서 로그인 버튼을 누르면 dispatch가 loginRequestAction을 실행시켜서 email과 password를 redux로 보냄       
+1. front에서 back으로 전송  
+   🗂 front/components/LoginForm.js
 
-2. redux에서 loginRequestAction을 받아    
-    🗂 front/reducer/user.js        
-    ```javascript
-    export const loginRequestAction = (data) => ({
-        type: LOG_IN_REQUEST,
-        data,
-    });
-    ```
-    LOG_IN_REQUEST를 뿌린다.        
+   ```javascript
+   const onSubmitForm = useCallback(() => {
+     // antd에서는 preventDefault가 이미 적용되어있어서 안해줘도 됨
+     dispatch(loginRequestAction({ email, password }));
+     // setIsLoggedIn(true);
+   }, [email, password]);
+   ```
 
-3. LOG_IN_REQUEST를 받은 saga는         
-    🗂 front/saga/user.js           
-    ```javascript
-    function logInAPI(data) { // (3) call을 해서 받은 logInAPI(action.data)임
-        return axios.post('/user/login', data);
-    }
+   에서 로그인 버튼을 누르면 dispatch가 loginRequestAction을 실행시켜서 email과 password를 redux로 보냄
 
-    function* logIn(action) { // (1)watchLogIn함수에서 받은 action을 매개변수로 받음
-        try {
-            const result = yield call(logInAPI, action.data); // (2)action으로 받은 로그인 data가 들어있음
-            yield put({
-                type: LOG_IN_SUCCESS,
-                data: result.data,
-                // data: result.data,
-            })
-        } catch (err) {
-            yield put({ // put은 dispatch라고 생각
-                type: LOG_IN_FAILURE, // Action이라고 생각
-                error: err.response.data,
-            })
-        }
-    }
-    function* watchLogIn() {
-        yield takeLatest(LOG_IN_REQUEST, logIn); // LOG_IN_REQUEST 이라는 명령이 시행될 때까지 기다림
-    }
-    ```
-    watchLogIn()에서 LOG_IN_REQUEST를 인식      
-    => logIn(action)부름            
-    => logIn 제네레이터에서는 yield call(logInAPI, action.data)를 통해 logInAPI함수를 부름      
-    => logInAPI는 백엔드인 /user/login에 data를 보낸다.(data=req.body)      
+2. redux에서 loginRequestAction을 받아  
+   🗂 front/reducer/user.js
+
+   ```javascript
+   export const loginRequestAction = (data) => ({
+     type: LOG_IN_REQUEST,
+     data,
+   });
+   ```
+
+   LOG_IN_REQUEST를 뿌린다.
+
+3. LOG_IN_REQUEST를 받은 saga는  
+   🗂 front/saga/user.js
+
+   ```javascript
+   function logInAPI(data) {
+     // (3) call을 해서 받은 logInAPI(action.data)임
+     return axios.post("/user/login", data);
+   }
+
+   function* logIn(action) {
+     // (1)watchLogIn함수에서 받은 action을 매개변수로 받음
+     try {
+       const result = yield call(logInAPI, action.data); // (2)action으로 받은 로그인 data가 들어있음
+       yield put({
+         type: LOG_IN_SUCCESS,
+         data: result.data,
+         // data: result.data,
+       });
+     } catch (err) {
+       yield put({
+         // put은 dispatch라고 생각
+         type: LOG_IN_FAILURE, // Action이라고 생각
+         error: err.response.data,
+       });
+     }
+   }
+   function* watchLogIn() {
+     yield takeLatest(LOG_IN_REQUEST, logIn); // LOG_IN_REQUEST 이라는 명령이 시행될 때까지 기다림
+   }
+   ```
+
+   watchLogIn()에서 LOG_IN_REQUEST를 인식  
+   => logIn(action)부름  
+   => logIn 제네레이터에서는 yield call(logInAPI, action.data)를 통해 logInAPI함수를 부름  
+   => logInAPI는 백엔드인 /user/login에 data를 보낸다.(data=req.body)
 
 4. 백엔드로 들어온 req.body(=data)는
-    🗂 back/routes/user.js      
-    ```javascript
-    router.post('/login', (req, res, next) => { // 미들웨어 확장
-        passport.authenticate('local', (err, user, info) => {
-            if (err) {
-                console.error(err);
-                return next(error);
-            }
-            if (info) {
-                return res.status(401).send(info.reason);
-            }
-            return req.login(user, async (loginErr) => {
-                if (loginErr) {
-                    console.error(loginErr);
-                    return next(loginErr);
-                }
-                return res.json(user);
-            })
-        })(req, res, next);
-    });
-    ```
-    authenticate을 실행한다.        
+   🗂 back/routes/user.js
 
-5. authenticate이 실행되면 LocalStrategy가 실행된다.        
-    🗂 back/passport/local.js      
-    ```javascript
-    module.exports = () => {
-        passport.use(new LocalStrategy({
-            usernameField: 'email',
-            passwordField: 'password',
-        }, async (email, password, done) => {
-            try {
-                const user = await User.findOne({
-                    where: { email }
-                })
-                if (!user) {
-                    return done(null, false, { reason: '존재하지 않는 사용자입니다.' })
-                    // done(서버 에러, 성공, 클라이언트 에러=보내는 측에서 잘못보냈을때)
-                }
-                const result = await bcrypt.compare(password, user.password);
-                if (result) {
-                    return done(null, user);
-                }
-                return done(null, false, { reason: '비밀번호가 틀렸습니다.' });
-            } catch (error) {
-                console.error(error);
-                return done(error);
-            }
-        }));
-    }
-    ```
-    여기서 각 단계에 맞춰서 done이 실행되는데 성공하게 되면 다시 callback 되어      
-    🗂 back/passport/local.js   
-    ```javascript
-    passport.authenticate('local', (err, user, info) => {
-            if (err) {
-                console.error(err);
-                return next(error);
-            }
-            if (info) {
-                return res.status(401).send(info.reason);
-            }
-            return req.login(user, async (loginErr) => {    
-                if (loginErr) {
-                    console.error(loginErr);
-                    return next(loginErr);
-                }
-                return res.json(user);
-            })
-        })(req, res, next);
-    ```
-    이 부분으로 돌아간다.       
-    그리고 이 부분에서 session이 필요하고 passport 로그인을 한다.             
+   ```javascript
+   router.post("/login", (req, res, next) => {
+     // 미들웨어 확장
+     passport.authenticate("local", (err, user, info) => {
+       if (err) {
+         console.error(err);
+         return next(error);
+       }
+       if (info) {
+         return res.status(401).send(info.reason);
+       }
+       return req.login(user, async (loginErr) => {
+         if (loginErr) {
+           console.error(loginErr);
+           return next(loginErr);
+         }
+         return res.json(user);
+       });
+     })(req, res, next);
+   });
+   ```
 
-    >session와 cookie는        
-    >```
-    >npm i express-session
-    >npm i cookie-parser
-    >```
-    >🗂 back/app.js
-    >```javascript
-    >app.use(cookieParser());
-    >app.use(session());
-    >app.use(passport.initialize());
-    >app.use(passport.session);
-    >```
-    >로 받아올 수 있다.      
+   authenticate을 실행한다.
 
-5. passport 로그인을 실행하기 위해서는 
-    🗂 back/passport/index.js
-    ```javascript
-    passport.serializeUser((user, done) => {
-        // back/routes/user.js의 req.login(user)의 user가 들어감
-        done(null, user.id);
-        // done(server error, success);
-        // 쿠키랑 묶어줄 id를 저장
-    });
-    ```
-    serializeUser 부분이 실행된다.      
-    즉, cookie와 user id만을 들고 있게 된다.        
+5. authenticate이 실행되면 LocalStrategy가 실행된다.  
+   🗂 back/passport/local.js
 
-6. 그리고 다시 돌아와서     
-    🗂 back/passport/local.js   
-    ```javascript
-    passport.authenticate('local', (err, user, info) => {
-        ...
-        return req.login(user, async (loginErr) => {    
-            ...
-            return res.json(user);
-        })
-    })(req, res, next);
-    ```
-    return res.json(user)를 통해서 쿠키랑 사용자 정보를 프론트로 보낸다.        
-    ![1-1](/assets/img/web/2021-09-01/1-1.png)          
-    Response Header의 Set-Cookie를 보면 쿠키
-    Request Payload를 보면 사용자 정보가 들어있음을 확인할 수 있다.     
+   ```javascript
+   module.exports = () => {
+     passport.use(
+       new LocalStrategy(
+         {
+           usernameField: "email",
+           passwordField: "password",
+         },
+         async (email, password, done) => {
+           try {
+             const user = await User.findOne({
+               where: { email },
+             });
+             if (!user) {
+               return done(null, false, {
+                 reason: "존재하지 않는 사용자입니다.",
+               });
+               // done(서버 에러, 성공, 클라이언트 에러=보내는 측에서 잘못보냈을때)
+             }
+             const result = await bcrypt.compare(password, user.password);
+             if (result) {
+               return done(null, user);
+             }
+             return done(null, false, { reason: "비밀번호가 틀렸습니다." });
+           } catch (error) {
+             console.error(error);
+             return done(error);
+           }
+         }
+       )
+     );
+   };
+   ```
 
-7. deserializeUser라는 건 그럼 무엇인가?        
-    ```javascript
-    passport.deserializeUser(async (id, done) => {
-        // id를 통해서 db에서 user data 가져옴
-        try {
-            const user = await User.findOne({ where: { id } });
-            done(null, user); // req.user 안에 넣음
-        } catch (error) {
-            console.error(error);
-            done(error);
-        }
-    });
-    ```
-    로그인 한 다음 요청부터는 id를 통해 정보를 복구함
+   여기서 각 단계에 맞춰서 done이 실행되는데 성공하게 되면 다시 callback 되어  
+   🗂 back/passport/local.js
 
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+   ```javascript
+   passport.authenticate("local", (err, user, info) => {
+     if (err) {
+       console.error(err);
+       return next(error);
+     }
+     if (info) {
+       return res.status(401).send(info.reason);
+     }
+     return req.login(user, async (loginErr) => {
+       if (loginErr) {
+         console.error(loginErr);
+         return next(loginErr);
+       }
+       return res.json(user);
+     });
+   })(req, res, next);
+   ```
+
+   이 부분으로 돌아간다.  
+   그리고 이 부분에서 session이 필요하고 passport 로그인을 한다.
+
+   > session와 cookie는
+   >
+   > ```
+   > npm i express-session
+   > npm i cookie-parser
+   > ```
+   >
+   > 🗂 back/app.js
+   >
+   > ```javascript
+   > app.use(cookieParser());
+   > app.use(session());
+   > app.use(passport.initialize());
+   > app.use(passport.session);
+   > ```
+   >
+   > 로 받아올 수 있다.
+
+6. passport 로그인을 실행하기 위해서는
+   🗂 back/passport/index.js
+
+   ```javascript
+   passport.serializeUser((user, done) => {
+     // back/routes/user.js의 req.login(user)의 user가 들어감
+     done(null, user.id);
+     // done(server error, success);
+     // 쿠키랑 묶어줄 id를 저장
+   });
+   ```
+
+   serializeUser 부분이 실행된다.  
+   즉, cookie와 user id만을 들고 있게 된다.
+
+7. 그리고 다시 돌아와서  
+   🗂 back/passport/local.js
+
+   ```javascript
+   passport.authenticate('local', (err, user, info) => {
+       ...
+       return req.login(user, async (loginErr) => {
+           ...
+           return res.json(user);
+       })
+   })(req, res, next);
+   ```
+
+   return res.json(user)를 통해서 쿠키랑 사용자 정보를 프론트로 보낸다.  
+   ![1-1](/assets/img/web/2021-09-01/1-1.png)  
+   Response Header의 Set-Cookie를 보면 쿠키
+   Request Payload를 보면 사용자 정보가 들어있음을 확인할 수 있다.
+
+8. deserializeUser라는 건 그럼 무엇인가?
+   ```javascript
+   passport.deserializeUser(async (id, done) => {
+     // id를 통해서 db에서 user data 가져옴
+     try {
+       const user = await User.findOne({ where: { id } });
+       done(null, user); // req.user 안에 넣음
+     } catch (error) {
+       console.error(error);
+       done(error);
+     }
+   });
+   ```
+   로그인 한 다음 요청부터는 id를 통해 정보를 복구함
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰  
 <br/>
 
 ## 🌟 로그인시 원하지 않는 정보는 빼고 원하는 정보는 추가하는 법
+
 ---
-routes/user.js      
+
+routes/user.js
+
 ```javascript
 outer.post('/login', (req, res, next) => { // 미들웨어 확장
     passport.authenticate('local', (err, user, info) => {
@@ -228,31 +265,34 @@ outer.post('/login', (req, res, next) => { // 미들웨어 확장
 });
 ```
 
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰  
 <br/>
 
 ## 🌟 회원가입 페이지로 못가게 하기
+
 ---
+
 🗂 pages.signup.js
+
 ```javascript
 const SignUp = () => {
-    useEffect(() => {
-            if (me && me.id) {
-                Router.replace('/');
-                // 뒤로 돌아가기 했을 때 페이지가 나오지 않게 하려면 push 대신 replace
-            }
-        }, [me && me.id])
+  useEffect(() => {
+    if (me && me.id) {
+      Router.replace("/");
+      // 뒤로 돌아가기 했을 때 페이지가 나오지 않게 하려면 push 대신 replace
+    }
+  }, [me && me.id]);
 
-        useEffect(() => {
-            if (signUpDone) {
-                Router.replace('/');
-            }
-        }, [signUpDone]);
-}
+  useEffect(() => {
+    if (signUpDone) {
+      Router.replace("/");
+    }
+  }, [signUpDone]);
+};
 ```
-me가 있으면 즉, 로그인이 되어 있으면 회원가입 페이지로 갈 수 없음       
-signUpDone true이면 즉, 회원가입이 완료되면 회원가입 페이지에서 자동으로 나가짐     
 
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+me가 있으면 즉, 로그인이 되어 있으면 회원가입 페이지로 갈 수 없음  
+signUpDone true이면 즉, 회원가입이 완료되면 회원가입 페이지에서 자동으로 나가짐
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰  
 <br/>
-

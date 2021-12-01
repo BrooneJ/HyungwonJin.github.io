@@ -3,108 +3,122 @@ layout: post
 title: "210907-TIL(javascript, infiniteScroll)"
 subtitle: "TIL-210907"
 categories: til
-tags: til
+tags: til-2021-09
 comments: false
 ---
 
-
 ## 🌟 무한 스크롤 (Infinite Scroll)
+
 ---
-<img src="https://raw.githubusercontent.com/HyungwonJin/HyungwonJin.github.io/main/assets/img/web/2021-09-07/1-1.png" width="200"/>             
 
-처음에는 위의 사진과 같이 pagenation을 사용해서 페이지 번호를 클릭하면 이동하게 만들려고 했지만 UX를 생각하면 infinite scroll 방식이 더 편한 것 같아서 infinite scroll을 구현하게 되었다. (버튼 한개 한개를 눌러가면서 다음 페이지로 넘어가는 것보다는 스크롤을 내려서 다음 페이지를 불러들이는 것이 더 편하다고 생각했다.)       
-현재로서는 pagenation 방식으로 할 때보다 메리트가 더 큰 것 같다.      
+<img src="https://raw.githubusercontent.com/HyungwonJin/HyungwonJin.github.io/main/assets/img/web/2021-09-07/1-1.png" width="200"/>
 
-참고: <https://developer.mozilla.org/ko/docs/Web/API/Intersection_Observer_API>     
-<https://tech.lezhin.com/2017/07/13/intersectionobserver-overview>          
-<https://www.imkh.dev/js-intersection-observer/>   
+처음에는 위의 사진과 같이 pagenation을 사용해서 페이지 번호를 클릭하면 이동하게 만들려고 했지만 UX를 생각하면 infinite scroll 방식이 더 편한 것 같아서 infinite scroll을 구현하게 되었다. (버튼 한개 한개를 눌러가면서 다음 페이지로 넘어가는 것보다는 스크롤을 내려서 다음 페이지를 불러들이는 것이 더 편하다고 생각했다.)  
+현재로서는 pagenation 방식으로 할 때보다 메리트가 더 큰 것 같다.
 
-요약하면 제일 마지막에 detector 라는 div를 둬서 화면에 detector가 나타나면 다음 페이지를 불러들인다는 것이다.       
-따라서 HTML에서     
+참고: <https://developer.mozilla.org/ko/docs/Web/API/Intersection_Observer_API>  
+<https://tech.lezhin.com/2017/07/13/intersectionobserver-overview>  
+<https://www.imkh.dev/js-intersection-observer/>
+
+요약하면 제일 마지막에 detector 라는 div를 둬서 화면에 detector가 나타나면 다음 페이지를 불러들인다는 것이다.  
+따라서 HTML에서
 
 🗂 src/views/home.pug
+
 ```
 block content
-    each word in words 
+    each word in words
         +words(word)
     else
-        li not found 
+        li not found
 
     div.scroll-detecting
 ```
-scroll-detecting이라는 클래스를 가진 div를 만들어 준다.     
-그리고 이 scroll-detecting가 화면에 보이면 해줄 행동을 자바스크립트로 만들어준다.       
+
+scroll-detecting이라는 클래스를 가진 div를 만들어 준다.  
+그리고 이 scroll-detecting가 화면에 보이면 해줄 행동을 자바스크립트로 만들어준다.  
 <br/>
 
-🗂 src/client/js/infiniteScroll.js      
+🗂 src/client/js/infiniteScroll.js
+
 ```js
 const loadItem = async () => {
-    try {
-        // 백엔드에 다음 페이지를 요구하는 post req를 보냄
-        const response = await fetch('/api/pages', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ pageCounter }),
-        });
-        // 다음 페이지가 있으면 201 응답과 json데이터를 받음
-        if (response.status === 201) {
-            const { words } = await response.json();
-            if (words.length !== 0) {
-                htmlMaking(words);
-            }
-        } else { // 201 응답이 아니라면 더이상 마지막 페이지에 도달했음을 알 수 있음
-            hasMore = false; // 더이상 데이터가 없으므로 false 처리
-        }
-        pageCounter++;
-
-    } catch (error) {
-        console.error(error);
+  try {
+    // 백엔드에 다음 페이지를 요구하는 post req를 보냄
+    const response = await fetch("/api/pages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ pageCounter }),
+    });
+    // 다음 페이지가 있으면 201 응답과 json데이터를 받음
+    if (response.status === 201) {
+      const { words } = await response.json();
+      if (words.length !== 0) {
+        htmlMaking(words);
+      }
+    } else {
+      // 201 응답이 아니라면 더이상 마지막 페이지에 도달했음을 알 수 있음
+      hasMore = false; // 더이상 데이터가 없으므로 false 처리
     }
-    container.appendChild(detector); // 마지막 페이지에 detector를 삽입
-}
+    pageCounter++;
+  } catch (error) {
+    console.error(error);
+  }
+  container.appendChild(detector); // 마지막 페이지에 detector를 삽입
+};
 
-const io = new IntersectionObserver(entries => {
-    if (entries.some(entry => entry.intersectionRatio > 0)) {
-        if (hasMore) {
-            loadItem();
-        }
+const io = new IntersectionObserver((entries) => {
+  if (entries.some((entry) => entry.intersectionRatio > 0)) {
+    if (hasMore) {
+      loadItem();
     }
-})
+  }
+});
 if (detector) {
-    io.observe(detector)
+  io.observe(detector);
 }
 ```
-다음 페이지가 있으면 hasMore가 true이고 없으면 false로 바꿔 다음 페이지를 불러오는 post request를 하지않음      
+
+다음 페이지가 있으면 hasMore가 true이고 없으면 false로 바꿔 다음 페이지를 불러오는 post request를 하지않음  
 <br/>
 
->페이지를 복잡하게 만들면 프론트에서 다시 만드는 것은 극한의 작업이었다...       
-><https://github.com/HyungwonJin/dailyword/blob/master/src/client/js/infiniteScroll.js>
->앗... 원래 이렇게 복잡하게 해야하는 것인지 좀 알아볼 필요성을 엄청나게 느꼈다... 리액트를 이러지 않았는데...
+> 페이지를 복잡하게 만들면 프론트에서 다시 만드는 것은 극한의 작업이었다...  
+> <https://github.com/HyungwonJin/dailyword/blob/master/src/client/js/infiniteScroll.js>
+> 앗... 원래 이렇게 복잡하게 해야하는 것인지 좀 알아볼 필요성을 엄청나게 느꼈다... 리액트를 이러지 않았는데...
 
->꼭 해줘야하는 것!
->🗂 src/client/js/main.js
->```js
->import "./infiniteScroll";
->```
->🗂 webpack.config.js        
->```js
->module.exports = {
+> 꼭 해줘야하는 것!
+> 🗂 src/client/js/main.js
+>
+> ```js
+> import "./infiniteScroll";
+> ```
+>
+> 🗂 webpack.config.js
+>
+> ```js
+> module.exports = {
 >    entry: {
 >        infiniteScroll: BASE_JS + "infiniteScroll.js",
 >    },
->```
+> ```
+>
 > 계속 까먹어서 왜 안되는 방황했음
 
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰  
 <br/>
 
-겪었던 오류     
+겪었던 오류
+
 ## 🌟 regeneratorRuntime error
+
 ---
+
 ### 🚔 문제 발견
+
 ---
+
 ```js
 const loadItem = async () => {
     // 백엔드에 다음 페이지를 요구하는 post req를 보냄
@@ -112,25 +126,35 @@ const loadItem = async () => {
         ...
     });
 ```
-![1-1](/assets/img/web/2021-09-07/1-2.png)         
-loadItem을 async/await 방법으로 불러오려하자 regeneratorRuntime error가 발생함      
+
+![1-1](/assets/img/web/2021-09-07/1-2.png)  
+loadItem을 async/await 방법으로 불러오려하자 regeneratorRuntime error가 발생함  
 <br/>
 
 ### 🔍 해결 방법
-이 에러를 처리하기 위해서는 **babel-polyfill**를 설치해줘야한다.        
+
+이 에러를 처리하기 위해서는 **babel-polyfill**를 설치해줘야한다.
+
 ```
 npm install --save @babel/polyfill
 ```
-그리고 위치는 해당 js 파일의 제일 위에          
+
+그리고 위치는 해당 js 파일의 제일 위에
+
 ```js
 require("babel-polyfill");
 ```
-babel-polyfill을 require 해준다.        
+
+babel-polyfill을 require 해준다.
 
 ## 🌟 json를 읽어오지 못하는 문제
+
 ---
+
 ### 🚔 문제 발견
+
 ---
+
 ```js
 const loadItem = async () => {
      // 백엔드에 다음 페이지를 요구하는 post req를 보냄
@@ -141,73 +165,93 @@ const loadItem = async () => {
          },
          body: JSON.stringify({ pageCounter }),
      });
-```         
-위의 코드에서 백엔드로 JSON 데이터를 보내주었지만 백엔드에서 json데이터를 해석하지 못하는 문제가 있었다.        
+```
+
+위의 코드에서 백엔드로 JSON 데이터를 보내주었지만 백엔드에서 json데이터를 해석하지 못하는 문제가 있었다.
 
 ### 🔍 해결 방법
+
 ---
+
 🗂 src/server.js
+
 ```js
 app.use(express.json());
 ```
-express의 기본으로 제공하는 미들웨어를 사용해서 간단히 해결할 수 있었다.        
-위의 코드를 추가해주기만 하면 백엔드에서 json을 해석할 수 있게된다.     
 
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+express의 기본으로 제공하는 미들웨어를 사용해서 간단히 해결할 수 있었다.  
+위의 코드를 추가해주기만 하면 백엔드에서 json을 해석할 수 있게된다.
+
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰  
 <br/>
 
 ## 🌟 MongoDB의 populate를 한 다음 limit를 적용하기
+
 ---
-home에서 모든 단어를 받아올 때는 populate를 사용할 필요가 없었지만 user가 가지고 있는 단어를 가져오기 위해서는 populate가 필요했고 이떄는 limit를 적용하는 방법이 좀 달랐다.        
+
+home에서 모든 단어를 받아올 때는 populate를 사용할 필요가 없었지만 user가 가지고 있는 단어를 가져오기 위해서는 populate가 필요했고 이떄는 limit를 적용하는 방법이 좀 달랐다.  
 <br/>
 
 home에서 limit를 쓸 때
+
 ```js
 export const loadPages = async (req, res) => {
-    const { body: { pageCounter } } = req;
-    const words = await Word.find({}).sort({ createdAt: "desc" }).limit(10).skip((pageCounter - 1) * 10);
-    if (words.length === 0) {
-        return res.sendStatus(404);
-    }
-    return res.status(201).json({ words });
-}
+  const {
+    body: { pageCounter },
+  } = req;
+  const words = await Word.find({})
+    .sort({ createdAt: "desc" })
+    .limit(10)
+    .skip((pageCounter - 1) * 10);
+  if (words.length === 0) {
+    return res.sendStatus(404);
+  }
+  return res.status(201).json({ words });
+};
 ```
 
 mypage에서 limit를 쓸 때
+
 ```js
 export const mypageLoading = async (req, res) => {
-    const { body: { pageCounter } } = req;
-    const { id } = req.params;
-    const wordsData = await User.findById(id).populate({ // populate를 사용
-        path: "words", // 가져올 model
-        options: {
-            sort: {
-                createdAt: "desc"
-            },
-            limit: 10,
-            skip: (pageCounter - 1) * 10,
-        }
-    });
-    if (wordsData.words.length === 0) {
-        return res.sendStatus(404);
-    }
-    return res.status(201).json({ words: wordsData.words });
-}
+  const {
+    body: { pageCounter },
+  } = req;
+  const { id } = req.params;
+  const wordsData = await User.findById(id).populate({
+    // populate를 사용
+    path: "words", // 가져올 model
+    options: {
+      sort: {
+        createdAt: "desc",
+      },
+      limit: 10,
+      skip: (pageCounter - 1) * 10,
+    },
+  });
+  if (wordsData.words.length === 0) {
+    return res.sendStatus(404);
+  }
+  return res.status(201).json({ words: wordsData.words });
+};
 ```
-<https://stackoverflow.com/questions/32207457/node-js-mongoose-populate-limit>      
-이 글을 참고해서 해결할 수 있었다.      
 
+<https://stackoverflow.com/questions/32207457/node-js-mongoose-populate-limit>  
+이 글을 참고해서 해결할 수 있었다.
 
-## 🌟 프론트에서 id를 가져오기  
+## 🌟 프론트에서 id를 가져오기
+
 ---
-마찬가지로 home에서 id 없이 모든 words를 가져올 수 있었지만 user가 가진 words를 가져오기 위해서는 id가 필요했고 프론트에서 백으로 가져오길 원하는 user를 알려줄 필요가 있었다.      
-![1-1](/assets/img/web/2021-09-07/1-3.png)         
-이 때 주목한 것이 url 속에 있는 user의 id였고 이를 가져오기 위해서 또 검색을 했다...        
-<https://stackoverflow.com/questions/979975/how-to-get-the-value-from-the-get-parameters>       
-여기서 찾을 수 있었다.      
+
+마찬가지로 home에서 id 없이 모든 words를 가져올 수 있었지만 user가 가진 words를 가져오기 위해서는 id가 필요했고 프론트에서 백으로 가져오길 원하는 user를 알려줄 필요가 있었다.  
+![1-1](/assets/img/web/2021-09-07/1-3.png)  
+이 때 주목한 것이 url 속에 있는 user의 id였고 이를 가져오기 위해서 또 검색을 했다...  
+<https://stackoverflow.com/questions/979975/how-to-get-the-value-from-the-get-parameters>  
+여기서 찾을 수 있었다.  
 <br/>
 
-🗂 src/client/js/infiniteScrollMyPage.js        
+🗂 src/client/js/infiniteScrollMyPage.js
+
 ```js
 const loadItem = async () => {
     const url_string = window.location.href;
@@ -220,6 +264,7 @@ const loadItem = async () => {
             },
             body: JSON.stringify({ pageCounter }),
         });
-```        
-window.location.href; 이라는 코드를 써서 주소를 받아올 수 있다는 것을 처음 알았다.      
-그리고 이를 users/를 기준으로 반으로 잘라서 뒷부분의 user id를 fetch에 넣어서 백엔드로 전송했더니 다음 페이지의 값을 잘 불러오게 되었다.        
+```
+
+window.location.href; 이라는 코드를 써서 주소를 받아올 수 있다는 것을 처음 알았다.  
+그리고 이를 users/를 기준으로 반으로 잘라서 뒷부분의 user id를 fetch에 넣어서 백엔드로 전송했더니 다음 페이지의 값을 잘 불러오게 되었다.

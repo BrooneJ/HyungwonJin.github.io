@@ -3,108 +3,118 @@ layout: post
 title: "210909-TIL(heroku)"
 subtitle: "TIL-210909"
 categories: til
-tags: til
+tags: til-2021-09
 comments: false
 ---
 
 ## 🌟 배포 준비
+
 ---
 
-1. babel/cli을 받는다.      
-    ```
-    npm i --save-dev @babel/core @babel/cli
-    ```
+1. babel/cli을 받는다.
 
-2. 스크립트를 수정한다.     
-    🗂 package.json     
-    ```js
-    "scripts": {
-        "build:server": "babel src -d build",
-        // -d build의 의미는 디렉토리를 어디로 할 것인지 묻는 것       
-        ...
-      },
-    ```
-    이렇게 생성된 스크립트를 실행하면 다음과 같이 build 폴더가 생성된다.        
-    ![1-1](/assets/img/web/2021-09-09/1-1.png)         
+   ```
+   npm i --save-dev @babel/core @babel/cli
+   ```
 
-3. start 스크립트를 설정        
-    ```js
-    "scripts": {
-        "start": "node build/init.js",
-        "build:server": "babel src -d build",
-        ...
-    },
-    ```
-    그리고 npm start를 신나는 마음으로 실행하면...!!!       
-    ![1-1](/assets/img/web/2021-09-09/1-2.png)         
-    위와 같은 regenerator-runtime error가 뜬다.     
-    이를 해결하기 위해서        
-    ```
-    npm i regenerator-runtime
-    ```
-    npm을 통해서 regenerator-runtime를 설치하고     
+2. 스크립트를 수정한다.  
+   🗂 package.json
 
-    🗂 src/init.js      
-    ```js
-    import "regenerator-runtime";
-    ```
-    regenerator-runtime를 init.js 최상단에 불러오고나서 다시 npm start를 실행하면       
-    ![1-1](/assets/img/web/2021-09-09/1-3.png)         
-    올바르게 실행된다.      
+   ```js
+   "scripts": {
+       "build:server": "babel src -d build",
+       // -d build의 의미는 디렉토리를 어디로 할 것인지 묻는 것
+       ...
+     },
+   ```
 
+   이렇게 생성된 스크립트를 실행하면 다음과 같이 build 폴더가 생성된다.  
+   ![1-1](/assets/img/web/2021-09-09/1-1.png)
 
+3. start 스크립트를 설정
 
-4. webpack 수정     
-    webpack.config.js에 적힌 mode: development를 지우고 package.json에 적어줌       
-    ```js
-    "scripts": {
-        "build:assets": "webpack --mode=production",
-        "dev:assets": "webpack --mode=development -w"
-    },
-    ```
-    5. 최종적으로 build 해줄 script입력
-    ```js
-    "scripts": {
-        "start": "node build/init.js",
-        "build": "npm run build:server && npm run build:assets",
-        "build:server": "babel src -d build",
-        "build:assets": "webpack --mode=production",
-        "dev:server": "nodemon",
-        "dev:assets": "webpack --mode=development -w"
-    },
-    ```
-    참고: <https://webpack.js.org/api/cli/>     
+   ```js
+   "scripts": {
+       "start": "node build/init.js",
+       "build:server": "babel src -d build",
+       ...
+   },
+   ```
 
+   그리고 npm start를 신나는 마음으로 실행하면...!!!  
+   ![1-1](/assets/img/web/2021-09-09/1-2.png)  
+   위와 같은 regenerator-runtime error가 뜬다.  
+   이를 해결하기 위해서
 
-## 🌟 Heroku에 올리는 방법      
+   ```
+   npm i regenerator-runtime
+   ```
+
+   npm을 통해서 regenerator-runtime를 설치하고
+
+   🗂 src/init.js
+
+   ```js
+   import "regenerator-runtime";
+   ```
+
+   regenerator-runtime를 init.js 최상단에 불러오고나서 다시 npm start를 실행하면  
+   ![1-1](/assets/img/web/2021-09-09/1-3.png)  
+   올바르게 실행된다.
+
+4. webpack 수정  
+   webpack.config.js에 적힌 mode: development를 지우고 package.json에 적어줌
+   ```js
+   "scripts": {
+       "build:assets": "webpack --mode=production",
+       "dev:assets": "webpack --mode=development -w"
+   },
+   ```
+   5. 최종적으로 build 해줄 script입력
+   ```js
+   "scripts": {
+       "start": "node build/init.js",
+       "build": "npm run build:server && npm run build:assets",
+       "build:server": "babel src -d build",
+       "build:assets": "webpack --mode=production",
+       "dev:server": "nodemon",
+       "dev:assets": "webpack --mode=development -w"
+   },
+   ```
+   참고: <https://webpack.js.org/api/cli/>
+
+## 🌟 Heroku에 올리는 방법
+
 ---
-1. heroku에 들어가서 app 만들기를 한다. 그리고 heroku cli를 설치한다.      
-    ```
-    heroku git:clone -a dailywords-hw
-    ```
-2. build를 해서 web에서 실행될 코드를 만든다.       
-    ```
-    npm run build
-    ```
 
-3. 그리고 현재 진행되고 있는 log를 보기위해서         
-    ```
-    heroku logs --tail
-    ```
+1. heroku에 들어가서 app 만들기를 한다. 그리고 heroku cli를 설치한다.
+   ```
+   heroku git:clone -a dailywords-hw
+   ```
+2. build를 해서 web에서 실행될 코드를 만든다.
+
+   ```
+   npm run build
+   ```
+
+3. 그리고 현재 진행되고 있는 log를 보기위해서
+   ```
+   heroku logs --tail
+   ```
 4. 그 다음 아래의 코드를 실행해서 heroku로 빌드
-    ```
-    git push heroku master
-    ```
-5. 다음과 같은 에러 발생        
-    ![1-1](/assets/img/web/2021-09-09/1-4.png)         
-    mongoDB에서 사용할 key가 .env에 들어있는데 git에는 .env가 업로드 되지 않기 때문에 발생하는  문제            
+   ```
+   git push heroku master
+   ```
+5. 다음과 같은 에러 발생  
+   ![1-1](/assets/img/web/2021-09-09/1-4.png)  
+   mongoDB에서 사용할 key가 .env에 들어있는데 git에는 .env가 업로드 되지 않기 때문에 발생하는 문제
 
-    ![1-1](/assets/img/web/2021-09-09/1-5.png)         
-    herokud에서 setting탭에서 Config Vars에 .env에 들어가있는 값들을 입력해준다.        
-6. github와 heroku 연결     
-    ![1-1](/assets/img/web/2021-09-09/1-6.png)         
-    위 그림과 같이 세팅해서 git push origin master를 하면 바로 heroku가 반영할 수 있도록 수정해준다.        
+   ![1-1](/assets/img/web/2021-09-09/1-5.png)  
+   herokud에서 setting탭에서 Config Vars에 .env에 들어가있는 값들을 입력해준다.
 
+6. github와 heroku 연결  
+   ![1-1](/assets/img/web/2021-09-09/1-6.png)  
+   위 그림과 같이 세팅해서 git push origin master를 하면 바로 heroku가 반영할 수 있도록 수정해준다.
 
-⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰      
+⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰🏔🗻🌋🏝⛰  
 <br/>
