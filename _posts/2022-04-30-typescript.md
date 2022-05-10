@@ -7,6 +7,8 @@ tags: til-2022-01
 comments: false
 ---
 
+![1-1](/assets/img/TIL.jpeg)
+
 # Polymorphism
 
 配列の中に色んな type の要素を入れるためには下記」のような形では実装できない
